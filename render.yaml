@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: finmate-budget-tracker
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: REACT_APP_FINNHUB_API_KEY
+        value: d1vmvu9r01qqgeemevpgd1vmvu9r01qqgeemevq0
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

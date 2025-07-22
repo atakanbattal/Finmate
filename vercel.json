@@ -1,0 +1,22 @@
+{
+  "name": "finmate-budget-tracker",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_FINNHUB_API_KEY": "d1vmvu9r01qqgeemevpgd1vmvu9r01qqgeemevq0"
+  }
+}

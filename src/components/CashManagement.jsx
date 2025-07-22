@@ -84,12 +84,13 @@ const CashManagement = () => {
     const totalWealth = availableCash + totalInvestmentValue;
     
     // Calculate regular income/expenses for projection
+    // Check for recurring transactions (either isRecurring=true or has recurring properties)
     const regularIncome = filteredTransactions
-      .filter(t => t.type === 'income' && t.isRecurring)
+      .filter(t => t.type === 'income' && (t.isRecurring || t.recurring?.frequency))
       .reduce((sum, t) => sum + t.amount, 0);
     
     const regularExpenses = filteredTransactions
-      .filter(t => t.type === 'expense' && t.isRecurring)
+      .filter(t => t.type === 'expense' && (t.isRecurring || t.recurring?.frequency))
       .reduce((sum, t) => sum + t.amount, 0);
     
     const monthlyNetRegular = regularIncome - regularExpenses;
@@ -434,22 +435,34 @@ const CashManagement = () => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors">
+          <button 
+            onClick={() => actions.setActiveModal('addTransaction', { type: 'income' })}
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors"
+          >
             <Plus className="h-5 w-5 text-green-600 mr-2" />
             <span className="text-green-700 font-medium">Gelir Ekle</span>
           </button>
           
-          <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-400 hover:bg-red-50 transition-colors">
+          <button 
+            onClick={() => actions.setActiveModal('addTransaction', { type: 'expense' })}
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-400 hover:bg-red-50 transition-colors"
+          >
             <Minus className="h-5 w-5 text-red-600 mr-2" />
             <span className="text-red-700 font-medium">Gider Ekle</span>
           </button>
           
-          <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors">
+          <button 
+            onClick={() => actions.setActiveModal('addInvestment')}
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors"
+          >
             <TrendingUp className="h-5 w-5 text-blue-600 mr-2" />
             <span className="text-blue-700 font-medium">Yatırım Ekle</span>
           </button>
           
-          <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-colors">
+          <button 
+            onClick={() => actions.setActiveModal('addGoal')}
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-colors"
+          >
             <Target className="h-5 w-5 text-purple-600 mr-2" />
             <span className="text-purple-700 font-medium">Hedef Ekle</span>
           </button>

@@ -181,6 +181,12 @@ const Investments = () => {
               <p className="text-2xl font-bold text-gray-900 mt-2">
                 {formatCurrency(currentValue)}
               </p>
+              {/* Debug: Eğer değerler aynıysa uyarı göster */}
+              {totalInvested === currentValue && totalInvested > 0 && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  ⚠️ Güncel değerler girilmemiş
+                </p>
+              )}
             </div>
             <div className="p-3 rounded-full bg-yellow-100">
               <TrendingUp className="h-6 w-6 text-yellow-600" />
@@ -321,7 +327,10 @@ const Investments = () => {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-gray-500 mb-1">Yatırılan Tutar</p>
-                        <p className="font-medium text-gray-900">{formatCurrency(investment.amount)}</p>
+                        <p className="font-medium text-gray-900">{formatCurrency(totalInvested)}</p>
+                        {totalInvested !== parseFloat(investment.amount) && (
+                          <p className="text-xs text-blue-600">Hesaplanan: {formatCurrency(totalInvested)}</p>
+                        )}
                       </div>
                       <div>
                         <p className="text-gray-500 mb-1">Tarih</p>
@@ -331,6 +340,14 @@ const Investments = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Debug: Güncel değer durumu */}
+                    {currentValue === totalInvested && (
+                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                        <p className="text-yellow-700 font-medium">⚠️ Güncel değer girilmemiş</p>
+                        <p className="text-yellow-600 mt-1">Bu yatırımı düzenleyerek güncel değerini girin</p>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Value & Gain */}

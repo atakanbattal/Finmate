@@ -108,7 +108,7 @@ const CashManagement = () => {
       monthlyNetRegular,
       filteredTransactions
     };
-  }, [state.transactions, state.investments, selectedPeriod]);
+  }, [state.transactions, state.investments, selectedMonth, selectedYear]);
 
   // Calculate when cash flow will improve
   const cashFlowProjection = useMemo(() => {

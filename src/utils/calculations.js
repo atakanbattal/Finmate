@@ -47,12 +47,36 @@ export const generateRecurringInstances = (transaction, startDate, endDate) => {
   const transactionDate = parseISO(transaction.date);
   const rangeStart = parseISO(startDate.toISOString().split('T')[0]);
   const rangeEnd = parseISO(endDate.toISOString().split('T')[0]);
-  const recurringEnd = transaction.recurringEndDate ? parseISO(transaction.recurringEndDate) : rangeEnd;
+  const recurringEnd = transaction.recurringEndDate ? parseISO(transaction.recurringEndDate) : null;
 
+  // Start from the NEXT occurrence, not the original date
   let currentDate = transactionDate;
+  
+  // Move to first occurrence based on period
+  switch (transaction.recurringPeriod) {
+    case 'WEEKLY':
+      currentDate = addWeeks(currentDate, 1);
+      break;
+    case 'MONTHLY':
+      currentDate = addMonths(currentDate, 1);
+      break;
+    case 'QUARTERLY':
+      currentDate = addMonths(currentDate, 3);
+      break;
+    case 'YEARLY':
+      currentDate = addYears(currentDate, 1);
+      break;
+    default:
+      return instances; // Invalid period, return empty
+  }
 
   // Generate instances within the date range
-  while (!isAfter(currentDate, rangeEnd) && !isAfter(currentDate, recurringEnd)) {
+  while (!isAfter(currentDate, rangeEnd)) {
+    // Check if we've passed the recurring end date
+    if (recurringEnd && isAfter(currentDate, recurringEnd)) {
+      break;
+    }
+    
     // Only include if the current date is within our target range
     if (!isBefore(currentDate, rangeStart)) {
       instances.push({
@@ -88,17 +112,32 @@ export const generateRecurringInstances = (transaction, startDate, endDate) => {
 
 // Get all transactions including recurring instances for a date range
 export const getTransactionsWithRecurring = (transactions, startDate, endDate) => {
-  const allTransactions = [...transactions];
+  const nonRecurringTransactions = [];
+  const recurringInstances = [];
   
-  // Generate recurring instances for each recurring transaction
+  // Separate recurring and non-recurring transactions
   transactions.forEach(transaction => {
     if (transaction.recurring && !transaction.isRecurringInstance) {
+      // For recurring transactions, only include the original if it's within the date range
+      const transactionDate = parseISO(transaction.date);
+      const rangeStart = parseISO(startDate.toISOString().split('T')[0]);
+      const rangeEnd = parseISO(endDate.toISOString().split('T')[0]);
+      
+      // Include original transaction if it's within range
+      if (!isBefore(transactionDate, rangeStart) && !isAfter(transactionDate, rangeEnd)) {
+        nonRecurringTransactions.push(transaction);
+      }
+      
+      // Generate recurring instances (excluding the original date)
       const instances = generateRecurringInstances(transaction, startDate, endDate);
-      allTransactions.push(...instances);
+      recurringInstances.push(...instances);
+    } else {
+      // Non-recurring transactions are always included
+      nonRecurringTransactions.push(transaction);
     }
   });
   
-  return allTransactions;
+  return [...nonRecurringTransactions, ...recurringInstances];
 };
 
 // Filter transactions by date range

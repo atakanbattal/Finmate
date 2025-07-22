@@ -20,15 +20,11 @@ import {
 
 const CashManagement = () => {
   const { state, actions } = useApp();
-  const [selectedPeriod, setSelectedPeriod] = useState('thisMonth');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showProjection, setShowProjection] = useState(true);
-  const [showPeriodModal, setShowPeriodModal] = useState(false);
-  const [periodLabel, setPeriodLabel] = useState('Bu Ay');
 
-  const handlePeriodSelect = (period, label) => {
-    setSelectedPeriod(period);
-    setPeriodLabel(label);
-  };
+  // Removed - using direct month/year selection now
 
   // Calculate cash and investment totals
   const cashData = useMemo(() => {
@@ -36,50 +32,12 @@ const CashManagement = () => {
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    // Get date range for filtering (STANDARDIZED)
+    // Get date range for selected month/year (SIMPLIFIED like Dashboard)
     const getDateRange = () => {
-      switch (selectedPeriod) {
-        case 'thisMonth':
-          return {
-            start: new Date(currentYear, currentMonth, 1),
-            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
-          };
-        case 'lastMonth':
-          return {
-            start: new Date(currentYear, currentMonth - 1, 1),
-            end: new Date(currentYear, currentMonth, 0, 23, 59, 59)
-          };
-        case 'last3Months':
-          return {
-            start: new Date(currentYear, currentMonth - 2, 1),
-            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
-          };
-        case 'last6Months':
-          return {
-            start: new Date(currentYear, currentMonth - 5, 1),
-            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
-          };
-        case 'thisYear':
-          return {
-            start: new Date(currentYear, 0, 1),
-            end: new Date(currentYear, 11, 31, 23, 59, 59)
-          };
-        case 'lastYear':
-          return {
-            start: new Date(currentYear - 1, 0, 1),
-            end: new Date(currentYear - 1, 11, 31, 23, 59, 59)
-          };
-        case 'all':
-          return {
-            start: new Date(2020, 0, 1),
-            end: new Date(currentYear + 1, 11, 31, 23, 59, 59)
-          };
-        default:
-          return {
-            start: new Date(currentYear, currentMonth, 1),
-            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
-          };
-      }
+      return {
+        start: new Date(selectedYear, selectedMonth, 1),
+        end: new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59)
+      };
     };
 
     const { start: startDate, end: endDate } = getDateRange();
@@ -204,179 +162,49 @@ const CashManagement = () => {
     );
   };
 
-  // Period Selection Modal Component (matching Reports page design)
-  const PeriodModal = ({ isOpen, onClose, onSelect }) => {
-    if (!isOpen) return null;
-
-    const months = [
-      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-    ];
-
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
-    const handleSelect = (type, value) => {
-      if (type === 'month') {
-        setSelectedMonth(value);
-      } else if (type === 'year') {
-        setSelectedYear(value);
-      }
-    };
-
-    const handleApply = () => {
-      const monthKey = `${months[selectedMonth].toLowerCase()}${selectedYear}`;
-      onSelect(monthKey, `${months[selectedMonth]} ${selectedYear}`);
-      onClose();
-    };
-
-    const handleQuickSelect = (range, label) => {
-      onSelect(range, label);
-      onClose();
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Zaman Aralığı Seçin</h3>
-              <button
-                onClick={onClose}
-                className="text-white hover:text-gray-200 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div className="p-6">
-            {/* Quick Selection */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Hızlı Seçim</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { key: 'thisMonth', label: 'Bu Ay' },
-                  { key: 'lastMonth', label: 'Geçen Ay' },
-                  { key: 'last3Months', label: 'Son 3 Ay' },
-                  { key: 'last6Months', label: 'Son 6 Ay' },
-                  { key: 'thisYear', label: 'Bu Yıl' },
-                  { key: 'lastYear', label: 'Geçen Yıl' },
-                  { key: 'all', label: 'Tümü' }
-                ].map(option => (
-                  <button
-                    key={option.key}
-                    onClick={() => handleQuickSelect(option.key, option.label)}
-                    className="px-3 py-2 text-sm bg-gray-100 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition-colors text-gray-700 font-medium"
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Month/Year Selection */}
-            <div className="border-t pt-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-4">Özel Tarih Seçimi</h4>
-              
-              {/* Year Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-600 mb-2">Yıl</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {years.map(year => (
-                    <button
-                      key={year}
-                      onClick={() => handleSelect('year', year)}
-                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-colors ${
-                        selectedYear === year
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Month Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-600 mb-2">Ay</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {months.map((month, index) => (
-                    <button
-                      key={month}
-                      onClick={() => handleSelect('month', index)}
-                      className={`px-3 py-2 text-sm rounded-lg font-medium transition-colors ${
-                        selectedMonth === index
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      {month}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Apply Button */}
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Seçilen: <span className="font-medium">{months[selectedMonth]} {selectedYear}</span>
-                </div>
-                <button
-                  onClick={handleApply}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  Uygula
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Nakit Yönetimi</h1>
-          <p className="text-gray-600 mt-1">Tüm nakitinizi ve yatırımlarınızı tek yerden takip edin</p>
+          <p className="text-gray-600 mt-1">
+            {[
+              'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+            ][selectedMonth]} {selectedYear} - Nakit Durumu
+          </p>
         </div>
         
-        <div className="mt-4 sm:mt-0">
-          <button
-            onClick={() => setShowPeriodModal(true)}
-            className="px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm hover:border-blue-500 hover:shadow-md transition-all duration-200 flex items-center space-x-3 group"
+        <div className="flex space-x-3 mt-4 sm:mt-0">
+          {/* Ay Seçici */}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            className="px-3 py-2 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300 border border-gray-300"
           >
-            <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-              <Calendar className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="text-left">
-              <div className="font-medium text-gray-900">{periodLabel}</div>
-              <div className="text-sm text-gray-500">Periyodu değiştir</div>
-            </div>
-            <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+            {[
+              'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+              'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+            ].map((month, index) => (
+              <option key={index} value={index}>{month}</option>
+            ))}
+          </select>
+          
+          {/* Yıl Seçici */}
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            className="px-3 py-2 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300 border border-gray-300"
+          >
+            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Period Selection Modal */}
-      <PeriodModal
-        isOpen={showPeriodModal}
-        onClose={() => setShowPeriodModal(false)}
-        onSelect={handlePeriodSelect}
-      />
+
 
       {/* Main Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

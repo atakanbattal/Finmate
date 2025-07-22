@@ -37,12 +37,43 @@ const Transactions = () => {
   // İlk olarak sadece orijinal işlemleri al (tekrarlayan örnekleri değil)
   const originalTransactions = baseTransactions.filter(t => !t.isRecurringInstance);
   
+  // Tarih filtreleme için seçilen ay/yıl bilgisini al
+  const getSelectedDateRange = () => {
+    if (!filters.dateRange || filters.dateRange === 'all') {
+      return null;
+    }
+    
+    // Ay/yıl formatından tarih aralığı oluştur (örn: "ocak2024")
+    const monthNames = {
+      'ocak': 0, 'şubat': 1, 'mart': 2, 'nisan': 3, 'mayıs': 4, 'haziran': 5,
+      'temmuz': 6, 'ağustos': 7, 'eylül': 8, 'ekim': 9, 'kasım': 10, 'aralık': 11
+    };
+    
+    const match = filters.dateRange.match(/([a-zçğıöşü]+)(\d{4})/);
+    if (match) {
+      const monthName = match[1];
+      const year = parseInt(match[2]);
+      const month = monthNames[monthName];
+      
+      if (month !== undefined) {
+        return {
+          start: new Date(year, month, 1),
+          end: new Date(year, month + 1, 0, 23, 59, 59)
+        };
+      }
+    }
+    
+    return null;
+  };
+  
+  const selectedDateRange = getSelectedDateRange();
+  
   // Tekrarlayan işlemleri özetli göster, tek seferlik işlemleri normal göster
   const processedTransactions = originalTransactions.map(transaction => {
     if (transaction.recurring) {
       // Tekrarlayan işlem için özet bilgi oluştur
-      const startDate = transaction.date;
-      const endDate = transaction.recurringEndDate || 'Süresiz';
+      const startDate = new Date(transaction.date);
+      const endDate = transaction.recurringEndDate ? new Date(transaction.recurringEndDate) : null;
       const periodText = {
         'WEEKLY': 'Haftalık',
         'MONTHLY': 'Aylık', 
@@ -50,24 +81,39 @@ const Transactions = () => {
         'YEARLY': 'Yıllık'
       }[transaction.recurringPeriod] || transaction.recurringPeriod;
       
+      // Tarih filtreleme: Seçilen aydan sonra biten işlemleri gizle
+      let shouldShow = true;
+      if (selectedDateRange && endDate) {
+        // Eğer işlem seçilen aydan önce bitiyorsa gizle
+        shouldShow = endDate >= selectedDateRange.start;
+      }
+      
       return {
         ...transaction,
         displayType: 'recurring-summary',
+        shouldShow,
         summaryInfo: {
-          startDate,
-          endDate,
+          startDate: startDate.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }),
+          endDate: endDate ? endDate.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Süresiz',
           period: periodText,
-          isActive: endDate === 'Süresiz' || new Date(endDate) >= new Date()
+          isActive: !endDate || endDate >= new Date(),
+          status: !endDate ? 'Devam Ediyor' : (endDate >= new Date() ? 'Aktif' : 'Sona Erdi')
         }
       };
     }
     return {
       ...transaction,
-      displayType: 'single'
+      displayType: 'single',
+      shouldShow: true
     };
   });
   
   const filteredTransactions = processedTransactions.filter(transaction => {
+    // Tarih filtrelemesi nedeniyle gizlenmişse gösterme
+    if (!transaction.shouldShow) {
+      return false;
+    }
+    
     // Search filter
     if (searchTerm && !transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !transaction.category.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -672,19 +718,14 @@ const Transactions = () => {
           {filteredTransactions.map(transaction => {
             const user = users.find(u => u.id === transaction.userId);
             
-            // Tekrarlayan işlem özeti için profesyonel görünüm
+            // Tekrarlayan işlem özeti için sade ve profesyonel görünüm
             if (transaction.displayType === 'recurring-summary') {
-              const formatDateRange = (start, end) => {
-                const startDate = new Date(start).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
-                const endDate = end === 'Süresiz' ? 'Süresiz' : new Date(end).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
-                return `${startDate} - ${endDate}`;
-              };
-              
               return (
-                <div key={transaction.id} className="p-5 hover:bg-gray-50 border border-gray-200 rounded-lg mb-3 shadow-sm">
+                <div key={transaction.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-200 mb-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    <div className="flex items-start space-x-4">
+                      {/* İkon */}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                       }`}>
                         {transaction.type === 'income' ? (
@@ -694,53 +735,62 @@ const Transactions = () => {
                         )}
                       </div>
                       
+                      {/* Ana İçerik */}
                       <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-1">
+                        {/* Başlık ve Durum */}
+                        <div className="flex items-center space-x-3 mb-2">
                           <h3 className="font-semibold text-gray-900 text-lg">{transaction.description}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             transaction.summaryInfo.isActive 
-                              ? 'bg-blue-100 text-blue-700' 
+                              ? 'bg-green-100 text-green-700' 
                               : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {transaction.summaryInfo.period} {!transaction.summaryInfo.isActive && '(Bitti)'}
+                            {transaction.summaryInfo.status}
                           </span>
                         </div>
                         
-                        <div className="flex items-center space-x-6 text-sm text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            <span className="font-medium">{transaction.category}</span>
+                        {/* Detaylar */}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500">Kategori:</span>
+                            <span className="ml-2 font-medium text-gray-700">{transaction.category}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDateRange(transaction.summaryInfo.startDate, transaction.summaryInfo.endDate)}</span>
+                          <div>
+                            <span className="text-gray-500">Periyot:</span>
+                            <span className="ml-2 font-medium text-gray-700">{transaction.summaryInfo.period}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                              {transaction.summaryInfo.period === 'Haftalık' && 'Her hafta'}
-                              {transaction.summaryInfo.period === 'Aylık' && 'Her ay'}
-                              {transaction.summaryInfo.period === 'Üç Aylık' && 'Her 3 ayda'}
-                              {transaction.summaryInfo.period === 'Yıllık' && 'Her yıl'}
+                          <div>
+                            <span className="text-gray-500">Başlangıç:</span>
+                            <span className="ml-2 font-medium text-gray-700">{transaction.summaryInfo.startDate}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Bitiş:</span>
+                            <span className={`ml-2 font-medium ${
+                              transaction.summaryInfo.endDate === 'Süresiz' 
+                                ? 'text-blue-600' 
+                                : transaction.summaryInfo.isActive 
+                                  ? 'text-gray-700' 
+                                  : 'text-red-600'
+                            }`}>
+                              {transaction.summaryInfo.endDate}
                             </span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <User className="h-4 w-4" />
-                            <span>{user?.name}</span>
                           </div>
                         </div>
                       </div>
                     </div>
                     
+                    {/* Tutar ve İşlemler */}
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <p className={`text-xl font-bold ${
+                        <p className={`text-2xl font-bold ${
                           transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
                         </p>
-                        <p className="text-sm text-gray-500">{transaction.summaryInfo.period}</p>
+                        <p className="text-sm text-gray-500 mt-1">{transaction.summaryInfo.period}</p>
                       </div>
                       
-                      <div className="flex space-x-1">
+                      <div className="flex flex-col space-y-1">
                         <button
                           onClick={() => setEditingTransaction(transaction)}
                           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -766,12 +816,13 @@ const Transactions = () => {
               );
             }
             
-            // Normal tek seferlik işlem profesyonel görünümü
+            // Normal tek seferlik işlem sade ve profesyonel görünümü
             return (
-              <div key={transaction.id} className="p-4 hover:bg-gray-50 border-b border-gray-100">
+              <div key={transaction.id} className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-sm transition-all duration-200 mb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    {/* İkon */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
                       {transaction.type === 'income' ? (
@@ -780,32 +831,47 @@ const Transactions = () => {
                         <ArrowDownRight className="h-4 w-4 text-red-600" />
                       )}
                     </div>
+                    
+                    {/* Ana İçerik */}
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">{transaction.description}</h4>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                        <span className="font-medium">{transaction.category}</span>
-                        <span className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{new Date(transaction.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <User className="h-4 w-4" />
-                          <span>{user?.name}</span>
-                        </span>
+                      <h4 className="font-semibold text-gray-900 text-lg mb-1">{transaction.description}</h4>
+                      <div className="flex items-center space-x-6 text-sm text-gray-600">
+                        <div>
+                          <span className="text-gray-500">Kategori:</span>
+                          <span className="ml-2 font-medium text-gray-700">{transaction.category}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Tarih:</span>
+                          <span className="ml-2 font-medium text-gray-700">
+                            {new Date(transaction.date).toLocaleDateString('tr-TR', { 
+                              day: '2-digit', 
+                              month: 'short', 
+                              year: 'numeric' 
+                            })}
+                          </span>
+                        </div>
+                        {user && (
+                          <div>
+                            <span className="text-gray-500">Kullanıcı:</span>
+                            <span className="ml-2 font-medium text-gray-700">{user.name}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                   
+                  {/* Tutar ve İşlemler */}
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <p className={`text-lg font-bold ${
+                      <p className={`text-xl font-bold ${
                         transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
                       </p>
+                      <p className="text-sm text-gray-500 mt-1">Tek Seferlik</p>
                     </div>
                     
-                    <div className="flex space-x-1">
+                    <div className="flex flex-col space-y-1">
                       <button
                         onClick={() => setEditingTransaction(transaction)}
                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

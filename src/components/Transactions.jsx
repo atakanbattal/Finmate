@@ -37,20 +37,37 @@ const Transactions = () => {
   // İlk olarak sadece orijinal işlemleri al (tekrarlayan örnekleri değil)
   const originalTransactions = baseTransactions.filter(t => !t.isRecurringInstance);
   
-  let allTransactions = originalTransactions;
+  // Tekrarlayan işlemleri özetli göster, tek seferlik işlemleri normal göster
+  const processedTransactions = originalTransactions.map(transaction => {
+    if (transaction.recurring) {
+      // Tekrarlayan işlem için özet bilgi oluştur
+      const startDate = transaction.date;
+      const endDate = transaction.recurringEndDate || 'Süresiz';
+      const periodText = {
+        'WEEKLY': 'Haftalık',
+        'MONTHLY': 'Aylık', 
+        'QUARTERLY': 'Üç Aylık',
+        'YEARLY': 'Yıllık'
+      }[transaction.recurringPeriod] || transaction.recurringPeriod;
+      
+      return {
+        ...transaction,
+        displayType: 'recurring-summary',
+        summaryInfo: {
+          startDate,
+          endDate,
+          period: periodText,
+          isActive: endDate === 'Süresiz' || new Date(endDate) >= new Date()
+        }
+      };
+    }
+    return {
+      ...transaction,
+      displayType: 'single'
+    };
+  });
   
-  // Include recurring instances if date filter is applied
-  if (filters.dateRange !== 'all') {
-    allTransactions = filterTransactionsByDate(originalTransactions, filters.dateRange);
-  } else {
-    // For 'all' range, include recurring instances for current year
-    const currentYear = new Date().getFullYear();
-    const yearStart = new Date(currentYear, 0, 1);
-    const yearEnd = new Date(currentYear, 11, 31);
-    allTransactions = getTransactionsWithRecurring(originalTransactions, yearStart, yearEnd);
-  }
-  
-  const filteredTransactions = allTransactions.filter(transaction => {
+  const filteredTransactions = processedTransactions.filter(transaction => {
     // Search filter
     if (searchTerm && !transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !transaction.category.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -654,6 +671,83 @@ const Transactions = () => {
         <div className="divide-y divide-gray-200">
           {filteredTransactions.map(transaction => {
             const user = users.find(u => u.id === transaction.userId);
+            
+            // Tekrarlayan işlem özeti için farklı görünüm
+            if (transaction.displayType === 'recurring-summary') {
+              return (
+                <div key={transaction.id} className="p-4 hover:bg-gray-50 bg-blue-50 border-l-4 border-blue-400">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-2 rounded-full ${
+                        transaction.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
+                      }`}>
+                        {transaction.type === 'income' ? (
+                          <ArrowUpRight className="h-4 w-4 text-success-600" />
+                        ) : (
+                          <ArrowDownRight className="h-4 w-4 text-danger-600" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium text-gray-900">{transaction.description}</p>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {transaction.summaryInfo.period}
+                          </span>
+                          {!transaction.summaryInfo.isActive && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              Bitti
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          <span>{transaction.category}</span>
+                          <span className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {transaction.summaryInfo.startDate} → {transaction.summaryInfo.endDate}
+                          </span>
+                          <span className="flex items-center">
+                            <User className="h-3 w-3 mr-1" />
+                            {user?.name}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className={`font-semibold ${
+                          transaction.type === 'income' ? 'text-success-600' : 'text-danger-600'
+                        }`}>
+                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                        </p>
+                        <p className="text-xs text-gray-500">{transaction.summaryInfo.period}</p>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setEditingTransaction(transaction)}
+                          className="p-1 text-gray-400 hover:text-primary-600"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('Bu tekrarlayan işlemi silmek istediğinizden emin misiniz?')) {
+                              actions.deleteTransaction(transaction.id);
+                            }
+                          }}
+                          className="p-1 text-gray-400 hover:text-danger-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Normal tek seferlik işlem görünümü
             return (
               <div key={transaction.id} className="p-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">

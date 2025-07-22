@@ -25,11 +25,7 @@ const Investments = () => {
 
   // Calculate portfolio metrics with improved error handling
   const portfolioMetrics = useMemo(() => {
-    const totalInvested = investments.reduce((sum, inv) => {
-      const amount = parseFloat(inv.amount) || 0;
-      return sum + amount;
-    }, 0);
-    
+    let totalInvested = 0;
     let currentValue = 0;
     let totalGains = 0;
     
@@ -38,7 +34,7 @@ const Investments = () => {
         const investedAmount = parseFloat(investment.amount) || 0;
         let dynamicCurrentValue = investedAmount; // fallback to invested amount
         
-        // Try dynamic calculation
+        // Try dynamic calculation first
         if (investment.type && investment.data && investmentTypes && investmentTypes[investment.type]) {
           try {
             const dynamicCalc = investmentTypes[investment.type].calculate(
@@ -48,6 +44,14 @@ const Investments = () => {
             );
             if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
               dynamicCurrentValue = dynamicCalc.currentValue;
+              // Use totalInvested from calculation if available (more accurate)
+              if (dynamicCalc.totalInvested && !isNaN(dynamicCalc.totalInvested)) {
+                totalInvested += dynamicCalc.totalInvested;
+              } else {
+                totalInvested += investedAmount;
+              }
+            } else {
+              totalInvested += investedAmount;
             }
           } catch (calcError) {
             console.warn(`Dynamic calculation failed for ${investment.type}:`, calcError);
@@ -55,23 +59,29 @@ const Investments = () => {
             if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
               dynamicCurrentValue = parseFloat(investment.currentValue);
             }
+            totalInvested += investedAmount;
           }
         } else if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
           // Use manual currentValue if no dynamic calculation available
           dynamicCurrentValue = parseFloat(investment.currentValue);
+          totalInvested += investedAmount;
+        } else {
+          // No current value available, use invested amount
+          totalInvested += investedAmount;
         }
         
         currentValue += dynamicCurrentValue;
-        totalGains += (dynamicCurrentValue - investedAmount);
         
       } catch (error) {
         console.error('Error calculating investment metrics:', error);
-        // Add invested amount to current value as fallback
+        // Add invested amount to both values as fallback
         const investedAmount = parseFloat(investment.amount) || 0;
+        totalInvested += investedAmount;
         currentValue += investedAmount;
       }
     });
     
+    totalGains = currentValue - totalInvested;
     const gainPercentage = totalInvested > 0 ? (totalGains / totalInvested) * 100 : 0;
     
     return {
@@ -232,6 +242,7 @@ const Investments = () => {
             // Güvenli yatırım hesaplama
             const investedAmount = parseFloat(investment.amount) || 0;
             let currentValue = investedAmount; // fallback to invested amount
+            let totalInvested = investedAmount; // actual invested amount
             let gain = 0;
             
             try {
@@ -245,6 +256,10 @@ const Investments = () => {
                   );
                   if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
                     currentValue = dynamicCalc.currentValue;
+                    // Use more accurate totalInvested from calculation if available
+                    if (dynamicCalc.totalInvested && !isNaN(dynamicCalc.totalInvested)) {
+                      totalInvested = dynamicCalc.totalInvested;
+                    }
                   }
                 } catch (calcError) {
                   console.warn(`Dynamic calculation failed for ${investment.type}:`, calcError);
@@ -258,13 +273,13 @@ const Investments = () => {
                 currentValue = parseFloat(investment.currentValue);
               }
               
-              gain = currentValue - investedAmount;
+              gain = currentValue - totalInvested;
             } catch (error) {
               console.error('Error in individual investment calculation:', error);
               gain = 0;
             }
             
-            const gainPercentage = investedAmount > 0 ? (gain / investedAmount) * 100 : 0;
+            const gainPercentage = totalInvested > 0 ? (gain / totalInvested) * 100 : 0;
             
             // Yatırım türü adını Türkçe'ye çevir
             const getInvestmentTypeName = (type) => {

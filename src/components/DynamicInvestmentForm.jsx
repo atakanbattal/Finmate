@@ -9,38 +9,60 @@ export const investmentTypes = {
     fields: [
       { key: 'stockPicker', label: 'Hisse Senedi', type: 'stockpicker', required: true },
       { key: 'lotCount', label: 'Lot Adedi', type: 'number', required: true },
-      { key: 'pricePerLot', label: 'Alış Fiyatı (₺/lot)', type: 'number', step: '0.01', required: true }
+      { key: 'pricePerLot', label: 'Alış Fiyatı (₺/lot)', type: 'number', step: '0.01', required: true },
+      { key: 'currentPricePerLot', label: 'Güncel Fiyat (₺/lot)', type: 'number', step: '0.01', placeholder: 'Manuel güncel fiyat girin' }
     ],
     calculate: (data, purchaseDate, investmentAmount, marketData) => {
       const lotCount = parseFloat(data.lotCount) || 0;
       const pricePerLot = parseFloat(data.pricePerLot) || 0;
+      const manualCurrentPrice = parseFloat(data.currentPricePerLot) || 0;
       
       // Seçili hisse senedi bilgisi
       const stockInfo = data.stockPicker;
       const stockSymbol = stockInfo?.symbol;
       
-      // Market data'dan güncel fiyat al
+      // Güncel fiyat belirleme: Manuel > Market Data > Alış Fiyatı
       let currentPrice = pricePerLot; // Fallback: alış fiyatı
       let extraInfo = '';
+      let priceSource = 'Alış fiyatı kullanılıyor';
       
-      if (stockSymbol && marketData && marketData[stockSymbol]) {
+      // Önce manuel güncel fiyat kontrol et
+      if (manualCurrentPrice > 0) {
+        currentPrice = manualCurrentPrice;
+        priceSource = 'Manuel güncel fiyat';
+        const gain = currentPrice - pricePerLot;
+        const gainPercent = pricePerLot > 0 ? ((gain / pricePerLot) * 100) : 0;
+        extraInfo = `${stockInfo?.name || 'Hisse'} - Manuel: ₺${currentPrice.toFixed(2)} (${gain >= 0 ? '+' : ''}₺${gain.toFixed(2)} / ${gainPercent >= 0 ? '+' : ''}${gainPercent.toFixed(2)}%)`;
+      }
+      // Market data'dan güncel fiyat al (eğer manuel girilmemişse)
+      else if (stockSymbol && marketData && marketData[stockSymbol]) {
         currentPrice = marketData[stockSymbol].price || pricePerLot;
+        priceSource = 'Otomatik market data';
         const change = marketData[stockSymbol].change;
         const changePercent = marketData[stockSymbol].changePercent;
         
-        extraInfo = `${stockInfo.name} (${stockSymbol}) - Güncel: ₺${currentPrice}`;
+        extraInfo = `${stockInfo.name} (${stockSymbol}) - Otomatik: ₺${currentPrice.toFixed(2)}`;
         if (change !== undefined) {
-          extraInfo += ` (${change >= 0 ? '+' : ''}${change} / ${changePercent >= 0 ? '+' : ''}${changePercent}%)`;
+          extraInfo += ` (${change >= 0 ? '+' : ''}₺${change.toFixed(2)} / ${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`;
         }
-      } else if (stockInfo) {
-        extraInfo = `${stockInfo.name} (${stockSymbol}) - Güncel fiyat alınamadı`;
+      }
+      // Hiçbir güncel fiyat yoksa alış fiyatını kullan
+      else if (stockInfo) {
+        extraInfo = `${stockInfo.name} (${stockSymbol}) - Güncel fiyat girilmemiş (kar/zarar: ₺0)`;
       }
       
+      const totalInvested = lotCount * pricePerLot;
+      const currentValue = lotCount * currentPrice;
+      const gain = currentValue - totalInvested;
+      const gainPercent = totalInvested > 0 ? ((gain / totalInvested) * 100) : 0;
+      
       return {
-        totalInvested: lotCount * pricePerLot,
-        currentValue: lotCount * currentPrice,
+        totalInvested,
+        currentValue,
+        gain,
+        gainPercent,
         units: `${lotCount} lot`,
-        extraInfo: extraInfo
+        extraInfo: extraInfo + ` | ${priceSource}`
       };
     }
   },

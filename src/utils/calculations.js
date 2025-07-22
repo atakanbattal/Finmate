@@ -1,4 +1,4 @@
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval, parseISO, addMonths, addWeeks, addYears, isBefore, isAfter } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
 // Date range utilities
@@ -37,11 +37,78 @@ export const getDateRange = (period) => {
   }
 };
 
+// Generate recurring transaction instances for a given date range
+export const generateRecurringInstances = (transaction, startDate, endDate) => {
+  if (!transaction.recurring || !transaction.recurringPeriod) {
+    return [];
+  }
+
+  const instances = [];
+  const transactionDate = parseISO(transaction.date);
+  const rangeStart = parseISO(startDate.toISOString().split('T')[0]);
+  const rangeEnd = parseISO(endDate.toISOString().split('T')[0]);
+  const recurringEnd = transaction.recurringEndDate ? parseISO(transaction.recurringEndDate) : rangeEnd;
+
+  let currentDate = transactionDate;
+
+  // Generate instances within the date range
+  while (!isAfter(currentDate, rangeEnd) && !isAfter(currentDate, recurringEnd)) {
+    // Only include if the current date is within our target range
+    if (!isBefore(currentDate, rangeStart)) {
+      instances.push({
+        ...transaction,
+        id: `${transaction.id}_${format(currentDate, 'yyyy-MM-dd')}`,
+        date: format(currentDate, 'yyyy-MM-dd'),
+        isRecurringInstance: true,
+        parentRecurringId: transaction.id
+      });
+    }
+
+    // Move to next occurrence based on period
+    switch (transaction.recurringPeriod) {
+      case 'WEEKLY':
+        currentDate = addWeeks(currentDate, 1);
+        break;
+      case 'MONTHLY':
+        currentDate = addMonths(currentDate, 1);
+        break;
+      case 'QUARTERLY':
+        currentDate = addMonths(currentDate, 3);
+        break;
+      case 'YEARLY':
+        currentDate = addYears(currentDate, 1);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return instances;
+};
+
+// Get all transactions including recurring instances for a date range
+export const getTransactionsWithRecurring = (transactions, startDate, endDate) => {
+  const allTransactions = [...transactions];
+  
+  // Generate recurring instances for each recurring transaction
+  transactions.forEach(transaction => {
+    if (transaction.recurring && !transaction.isRecurringInstance) {
+      const instances = generateRecurringInstances(transaction, startDate, endDate);
+      allTransactions.push(...instances);
+    }
+  });
+  
+  return allTransactions;
+};
+
 // Filter transactions by date range
 export const filterTransactionsByDate = (transactions, dateRange) => {
   const { start, end } = getDateRange(dateRange);
   
-  return transactions.filter(transaction => {
+  // Get all transactions including recurring instances
+  const allTransactions = getTransactionsWithRecurring(transactions, start, end);
+  
+  return allTransactions.filter(transaction => {
     const transactionDate = parseISO(transaction.date);
     return isWithinInterval(transactionDate, { start, end });
   });
@@ -53,6 +120,12 @@ export const calculateTotalIncome = (transactions, filters = {}) => {
   
   if (filters.dateRange && filters.dateRange !== 'all') {
     filteredTransactions = filterTransactionsByDate(filteredTransactions, filters.dateRange);
+  } else if (filters.dateRange === 'all') {
+    // For 'all' range, still include recurring instances for a reasonable period
+    const start = new Date('2020-01-01');
+    const end = new Date('2030-12-31');
+    filteredTransactions = getTransactionsWithRecurring(filteredTransactions, start, end)
+      .filter(t => t.type === 'income');
   }
   
   if (filters.user && filters.user !== 'all') {
@@ -72,6 +145,12 @@ export const calculateTotalExpenses = (transactions, filters = {}) => {
   
   if (filters.dateRange && filters.dateRange !== 'all') {
     filteredTransactions = filterTransactionsByDate(filteredTransactions, filters.dateRange);
+  } else if (filters.dateRange === 'all') {
+    // For 'all' range, still include recurring instances for a reasonable period
+    const start = new Date('2020-01-01');
+    const end = new Date('2030-12-31');
+    filteredTransactions = getTransactionsWithRecurring(filteredTransactions, start, end)
+      .filter(t => t.type === 'expense');
   }
   
   if (filters.user && filters.user !== 'all') {
@@ -186,7 +265,10 @@ export const getMonthlyData = (transactions, year = new Date().getFullYear()) =>
     const monthStart = new Date(year, month, 1);
     const monthEnd = new Date(year, month + 1, 0);
     
-    const monthTransactions = transactions.filter(transaction => {
+    // Get all transactions including recurring instances for this month
+    const allTransactions = getTransactionsWithRecurring(transactions, monthStart, monthEnd);
+    
+    const monthTransactions = allTransactions.filter(transaction => {
       const transactionDate = parseISO(transaction.date);
       return isWithinInterval(transactionDate, { start: monthStart, end: monthEnd });
     });

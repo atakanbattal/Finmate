@@ -18,7 +18,7 @@ import {
   TRANSACTION_TYPES,
   RECURRING_PERIODS 
 } from '../types';
-import { formatCurrency, filterTransactionsByDate } from '../utils/calculations';
+import { formatCurrency, filterTransactionsByDate, getTransactionsWithRecurring } from '../utils/calculations';
 
 const Transactions = () => {
   const { state, actions } = useApp();
@@ -32,17 +32,24 @@ const Transactions = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Filter transactions based on current filters and search
-  const filteredTransactions = transactions.filter(transaction => {
+  let allTransactions = transactions;
+  
+  // Include recurring instances if date filter is applied
+  if (filters.dateRange !== 'all') {
+    allTransactions = filterTransactionsByDate(transactions, filters.dateRange);
+  } else {
+    // For 'all' range, include recurring instances for current year
+    const currentYear = new Date().getFullYear();
+    const yearStart = new Date(currentYear, 0, 1);
+    const yearEnd = new Date(currentYear, 11, 31);
+    allTransactions = getTransactionsWithRecurring(transactions, yearStart, yearEnd);
+  }
+  
+  const filteredTransactions = allTransactions.filter(transaction => {
     // Search filter
     if (searchTerm && !transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !transaction.category.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
-    }
-    
-    // Date filter
-    if (filters.dateRange !== 'all') {
-      const dateFiltered = filterTransactionsByDate([transaction], filters.dateRange);
-      if (dateFiltered.length === 0) return false;
     }
     
     // User filter

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import GoalInsights from './GoalInsights';
+import { getTransactionsWithRecurring } from '../utils/calculations';
 
 const Dashboard = () => {
   const { state, actions } = useApp();
@@ -36,12 +37,24 @@ const Dashboard = () => {
     ? transactions 
     : transactions.filter(t => t.userId === selectedPerson);
 
-  // Basit finansal hesaplamalar
-  const totalIncome = filteredTransactions
+  // Bu ay için tekrarlayan işlemleri dahil et
+  const currentDate = new Date();
+  const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  
+  // Bu ay için tüm işlemleri (tekrarlayan dahil) al
+  const currentMonthTransactions = getTransactionsWithRecurring(filteredTransactions, monthStart, monthEnd)
+    .filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate >= monthStart && transactionDate <= monthEnd;
+    });
+
+  // Basit finansal hesaplamalar (bu ay için)
+  const totalIncome = currentMonthTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const totalExpenses = filteredTransactions
+  const totalExpenses = currentMonthTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 

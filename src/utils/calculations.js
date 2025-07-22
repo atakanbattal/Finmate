@@ -153,24 +153,17 @@ export const filterTransactionsByDate = (transactions, dateRange) => {
   });
 };
 
-// Calculate total income from transactions
+// Calculate total income from transactions (SIMPLIFIED)
 export const calculateTotalIncome = (transactions, filters = {}) => {
+  // Transactions already include recurring instances from Reports component
   let filteredTransactions = transactions.filter(t => t.type === 'income');
   
-  if (filters.dateRange && filters.dateRange !== 'all') {
-    filteredTransactions = filterTransactionsByDate(filteredTransactions, filters.dateRange);
-  } else if (filters.dateRange === 'all') {
-    // For 'all' range, still include recurring instances for a reasonable period
-    const start = new Date('2020-01-01');
-    const end = new Date('2030-12-31');
-    filteredTransactions = getTransactionsWithRecurring(filteredTransactions, start, end)
-      .filter(t => t.type === 'income');
-  }
-  
+  // Apply user filter if specified
   if (filters.user && filters.user !== 'all') {
     filteredTransactions = filteredTransactions.filter(t => t.userId === filters.user);
   }
   
+  // Apply category filter if specified
   if (filters.category && filters.category !== 'all') {
     filteredTransactions = filteredTransactions.filter(t => t.category === filters.category);
   }
@@ -178,24 +171,17 @@ export const calculateTotalIncome = (transactions, filters = {}) => {
   return filteredTransactions.reduce((total, transaction) => total + transaction.amount, 0);
 };
 
-// Calculate total expenses from transactions
+// Calculate total expenses from transactions (SIMPLIFIED)
 export const calculateTotalExpenses = (transactions, filters = {}) => {
+  // Transactions already include recurring instances from Reports component
   let filteredTransactions = transactions.filter(t => t.type === 'expense');
   
-  if (filters.dateRange && filters.dateRange !== 'all') {
-    filteredTransactions = filterTransactionsByDate(filteredTransactions, filters.dateRange);
-  } else if (filters.dateRange === 'all') {
-    // For 'all' range, still include recurring instances for a reasonable period
-    const start = new Date('2020-01-01');
-    const end = new Date('2030-12-31');
-    filteredTransactions = getTransactionsWithRecurring(filteredTransactions, start, end)
-      .filter(t => t.type === 'expense');
-  }
-  
+  // Apply user filter if specified
   if (filters.user && filters.user !== 'all') {
     filteredTransactions = filteredTransactions.filter(t => t.userId === filters.user);
   }
   
+  // Apply category filter if specified
   if (filters.category && filters.category !== 'all') {
     filteredTransactions = filteredTransactions.filter(t => t.category === filters.category);
   }
@@ -203,7 +189,7 @@ export const calculateTotalExpenses = (transactions, filters = {}) => {
   return filteredTransactions.reduce((total, transaction) => total + transaction.amount, 0);
 };
 
-// Calculate net cash flow
+// Calculate net cash flow (income - expenses) (SIMPLIFIED)
 export const calculateNetCashFlow = (transactions, filters = {}) => {
   const income = calculateTotalIncome(transactions, filters);
   const expenses = calculateTotalExpenses(transactions, filters);

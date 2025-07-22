@@ -672,61 +672,79 @@ const Transactions = () => {
           {filteredTransactions.map(transaction => {
             const user = users.find(u => u.id === transaction.userId);
             
-            // Tekrarlayan işlem özeti için farklı görünüm
+            // Tekrarlayan işlem özeti için profesyonel görünüm
             if (transaction.displayType === 'recurring-summary') {
+              const formatDateRange = (start, end) => {
+                const startDate = new Date(start).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+                const endDate = end === 'Süresiz' ? 'Süresiz' : new Date(end).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+                return `${startDate} - ${endDate}`;
+              };
+              
               return (
-                <div key={transaction.id} className="p-4 hover:bg-gray-50 bg-blue-50 border-l-4 border-blue-400">
+                <div key={transaction.id} className="p-5 hover:bg-gray-50 border border-gray-200 rounded-lg mb-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-full ${
-                        transaction.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                       }`}>
                         {transaction.type === 'income' ? (
-                          <ArrowUpRight className="h-4 w-4 text-success-600" />
+                          <ArrowUpRight className="h-5 w-5 text-green-600" />
                         ) : (
-                          <ArrowDownRight className="h-4 w-4 text-danger-600" />
+                          <ArrowDownRight className="h-5 w-5 text-red-600" />
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <p className="font-medium text-gray-900">{transaction.description}</p>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {transaction.summaryInfo.period}
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-1">
+                          <h3 className="font-semibold text-gray-900 text-lg">{transaction.description}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            transaction.summaryInfo.isActive 
+                              ? 'bg-blue-100 text-blue-700' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {transaction.summaryInfo.period} {!transaction.summaryInfo.isActive && '(Bitti)'}
                           </span>
-                          {!transaction.summaryInfo.isActive && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                              Bitti
-                            </span>
-                          )}
                         </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span>{transaction.category}</span>
-                          <span className="flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {transaction.summaryInfo.startDate} → {transaction.summaryInfo.endDate}
-                          </span>
-                          <span className="flex items-center">
-                            <User className="h-3 w-3 mr-1" />
-                            {user?.name}
-                          </span>
+                        
+                        <div className="flex items-center space-x-6 text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <span className="font-medium">{transaction.category}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>{formatDateRange(transaction.summaryInfo.startDate, transaction.summaryInfo.endDate)}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                              {transaction.summaryInfo.period === 'Haftalık' && 'Her hafta'}
+                              {transaction.summaryInfo.period === 'Aylık' && 'Her ay'}
+                              {transaction.summaryInfo.period === 'Üç Aylık' && 'Her 3 ayda'}
+                              {transaction.summaryInfo.period === 'Yıllık' && 'Her yıl'}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <User className="h-4 w-4" />
+                            <span>{user?.name}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <p className={`font-semibold ${
-                          transaction.type === 'income' ? 'text-success-600' : 'text-danger-600'
+                        <p className={`text-xl font-bold ${
+                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                          {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
                         </p>
-                        <p className="text-xs text-gray-500">{transaction.summaryInfo.period}</p>
+                        <p className="text-sm text-gray-500">{transaction.summaryInfo.period}</p>
                       </div>
                       
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-1">
                         <button
                           onClick={() => setEditingTransaction(transaction)}
-                          className="p-1 text-gray-400 hover:text-primary-600"
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Düzenle"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
@@ -736,7 +754,8 @@ const Transactions = () => {
                               actions.deleteTransaction(transaction.id);
                             }
                           }}
-                          className="p-1 text-gray-400 hover:text-danger-600"
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Sil"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -747,31 +766,31 @@ const Transactions = () => {
               );
             }
             
-            // Normal tek seferlik işlem görünümü
+            // Normal tek seferlik işlem profesyonel görünümü
             return (
-              <div key={transaction.id} className="p-4 hover:bg-gray-50">
+              <div key={transaction.id} className="p-4 hover:bg-gray-50 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className={`p-2 rounded-full ${
-                      transaction.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
                       {transaction.type === 'income' ? (
-                        <ArrowUpRight className="h-4 w-4 text-success-600" />
+                        <ArrowUpRight className="h-4 w-4 text-green-600" />
                       ) : (
-                        <ArrowDownRight className="h-4 w-4 text-danger-600" />
+                        <ArrowDownRight className="h-4 w-4 text-red-600" />
                       )}
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{transaction.description}</p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>{transaction.category}</span>
-                        <span className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {transaction.date}
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{transaction.description}</h4>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                        <span className="font-medium">{transaction.category}</span>
+                        <span className="flex items-center space-x-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(transaction.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         </span>
-                        <span className="flex items-center">
-                          <User className="h-3 w-3 mr-1" />
-                          {user?.name}
+                        <span className="flex items-center space-x-1">
+                          <User className="h-4 w-4" />
+                          <span>{user?.name}</span>
                         </span>
                       </div>
                     </div>
@@ -779,17 +798,18 @@ const Transactions = () => {
                   
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <p className={`font-semibold ${
-                        transaction.type === 'income' ? 'text-success-600' : 'text-danger-600'
+                      <p className={`text-lg font-bold ${
+                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                        {transaction.type === 'income' ? '+' : ''}{formatCurrency(transaction.amount)}
                       </p>
                     </div>
                     
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1">
                       <button
                         onClick={() => setEditingTransaction(transaction)}
-                        className="p-1 text-gray-400 hover:text-primary-600"
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Düzenle"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
@@ -803,7 +823,8 @@ const Transactions = () => {
                             actions.deleteTransaction(idToDelete);
                           }
                         }}
-                        className="p-1 text-gray-400 hover:text-danger-600"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Sil"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

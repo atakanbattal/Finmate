@@ -30,7 +30,8 @@ import {
   calculateTotalIncome,
   calculateTotalExpenses,
   calculateNetCashFlow,
-  calculateSavingsRate
+  calculateSavingsRate,
+  getTransactionsWithRecurring
 } from '../utils/calculations';
 
 const Reports = () => {
@@ -64,23 +65,74 @@ const Reports = () => {
     setUserLabel(label);
   };
 
-  // Filter data based on selections
-  const filters = {
-    dateRange: timeRange,
-    user: selectedUser
+  // Get date range for filtering (STANDARDIZED)
+  const getDateRange = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDate = now.getDate();
+    
+    switch (timeRange) {
+      case 'thisMonth':
+        return {
+          start: new Date(currentYear, currentMonth, 1),
+          end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+        };
+      case 'lastMonth':
+        return {
+          start: new Date(currentYear, currentMonth - 1, 1),
+          end: new Date(currentYear, currentMonth, 0, 23, 59, 59)
+        };
+      case 'last3Months':
+        return {
+          start: new Date(currentYear, currentMonth - 2, 1),
+          end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+        };
+      case 'last6Months':
+        return {
+          start: new Date(currentYear, currentMonth - 5, 1),
+          end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+        };
+      case 'thisYear':
+        return {
+          start: new Date(currentYear, 0, 1),
+          end: new Date(currentYear, 11, 31, 23, 59, 59)
+        };
+      case 'lastYear':
+        return {
+          start: new Date(currentYear - 1, 0, 1),
+          end: new Date(currentYear - 1, 11, 31, 23, 59, 59)
+        };
+      case 'all':
+        return {
+          start: new Date(2020, 0, 1),
+          end: new Date(currentYear + 1, 11, 31, 23, 59, 59)
+        };
+      default:
+        return {
+          start: new Date(currentYear, 0, 1),
+          end: new Date(currentYear, 11, 31, 23, 59, 59)
+        };
+    }
   };
 
-  const filteredTransactions = transactions.filter(transaction => {
+  const { start: startDate, end: endDate } = getDateRange();
+  
+  // Get transactions with recurring instances
+  const allTransactions = getTransactionsWithRecurring(transactions, startDate, endDate);
+  
+  // Filter data based on selections
+  const filteredTransactions = allTransactions.filter(transaction => {
     if (selectedUser !== 'all' && transaction.userId !== selectedUser) {
       return false;
     }
     return true;
   });
 
-  // Calculate metrics
-  const totalIncome = calculateTotalIncome(filteredTransactions, filters);
-  const totalExpenses = calculateTotalExpenses(filteredTransactions, filters);
-  const netCashFlow = calculateNetCashFlow(filteredTransactions, filters);
+  // Calculate metrics with date range
+  const totalIncome = calculateTotalIncome(filteredTransactions, { startDate, endDate });
+  const totalExpenses = calculateTotalExpenses(filteredTransactions, { startDate, endDate });
+  const netCashFlow = calculateNetCashFlow(filteredTransactions, { startDate, endDate });
   const savingsRate = calculateSavingsRate(totalIncome, totalExpenses);
 
   // Get monthly data for charts
@@ -153,7 +205,8 @@ const Reports = () => {
                   { key: 'last3Months', label: 'Son 3 Ay' },
                   { key: 'last6Months', label: 'Son 6 Ay' },
                   { key: 'thisYear', label: 'Bu Yıl' },
-                  { key: 'lastYear', label: 'Geçen Yıl' }
+                  { key: 'lastYear', label: 'Geçen Yıl' },
+                  { key: 'all', label: 'Tümü' }
                 ].map(option => (
                   <button
                     key={option.key}

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import SavingsSettings from './SavingsSettings';
 import { investmentTypes } from './DynamicInvestmentForm';
-import { calculatePortfolioValueDynamic } from '../utils/calculations';
+import { calculatePortfolioValueDynamic, getTransactionsWithRecurring } from '../utils/calculations';
 import {
   Wallet,
   TrendingUp,
@@ -36,28 +36,57 @@ const CashManagement = () => {
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    // Filter transactions based on selected period
+    // Get date range for filtering (STANDARDIZED)
+    const getDateRange = () => {
+      switch (selectedPeriod) {
+        case 'thisMonth':
+          return {
+            start: new Date(currentYear, currentMonth, 1),
+            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+          };
+        case 'lastMonth':
+          return {
+            start: new Date(currentYear, currentMonth - 1, 1),
+            end: new Date(currentYear, currentMonth, 0, 23, 59, 59)
+          };
+        case 'last3Months':
+          return {
+            start: new Date(currentYear, currentMonth - 2, 1),
+            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+          };
+        case 'last6Months':
+          return {
+            start: new Date(currentYear, currentMonth - 5, 1),
+            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+          };
+        case 'thisYear':
+          return {
+            start: new Date(currentYear, 0, 1),
+            end: new Date(currentYear, 11, 31, 23, 59, 59)
+          };
+        case 'lastYear':
+          return {
+            start: new Date(currentYear - 1, 0, 1),
+            end: new Date(currentYear - 1, 11, 31, 23, 59, 59)
+          };
+        case 'all':
+          return {
+            start: new Date(2020, 0, 1),
+            end: new Date(currentYear + 1, 11, 31, 23, 59, 59)
+          };
+        default:
+          return {
+            start: new Date(currentYear, currentMonth, 1),
+            end: new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+          };
+      }
+    };
+
+    const { start: startDate, end: endDate } = getDateRange();
+    
+    // Get transactions with recurring instances for selected period
     const getFilteredTransactions = () => {
-      return state.transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date);
-        switch (selectedPeriod) {
-          case 'thisMonth':
-            return transactionDate.getMonth() === currentMonth && 
-                   transactionDate.getFullYear() === currentYear;
-          case 'lastMonth':
-            const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-            const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-            return transactionDate.getMonth() === lastMonth && 
-                   transactionDate.getFullYear() === lastMonthYear;
-          case 'last3Months':
-            const threeMonthsAgo = new Date(currentYear, currentMonth - 3, 1);
-            return transactionDate >= threeMonthsAgo;
-          case 'thisYear':
-            return transactionDate.getFullYear() === currentYear;
-          default:
-            return true;
-        }
-      });
+      return getTransactionsWithRecurring(state.transactions, startDate, endDate);
     };
 
     const filteredTransactions = getFilteredTransactions();
@@ -235,8 +264,10 @@ const CashManagement = () => {
                   { key: 'thisMonth', label: 'Bu Ay' },
                   { key: 'lastMonth', label: 'Geçen Ay' },
                   { key: 'last3Months', label: 'Son 3 Ay' },
+                  { key: 'last6Months', label: 'Son 6 Ay' },
                   { key: 'thisYear', label: 'Bu Yıl' },
-                  { key: 'all', label: 'Tüm Zamanlar' }
+                  { key: 'lastYear', label: 'Geçen Yıl' },
+                  { key: 'all', label: 'Tümü' }
                 ].map(option => (
                   <button
                     key={option.key}

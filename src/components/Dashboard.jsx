@@ -13,6 +13,8 @@ const Dashboard = () => {
   const { state, actions } = useApp();
   const { transactions = [], users = [], goals = [], settings = {} } = state;
   const [selectedPerson, setSelectedPerson] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showAddForm, setShowAddForm] = useState(false);
   const [transactionType, setTransactionType] = useState('income');
   const [formData, setFormData] = useState({
@@ -37,19 +39,18 @@ const Dashboard = () => {
     ? transactions 
     : transactions.filter(t => t.userId === selectedPerson);
 
-  // Bu ay için tekrarlayan işlemleri dahil et
-  const currentDate = new Date();
-  const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  // Seçilen ay için tekrarlayan işlemleri dahil et
+  const monthStart = new Date(selectedYear, selectedMonth, 1);
+  const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
   
-  // Bu ay için tüm işlemleri (tekrarlayan dahil) al
+  // Seçilen ay için tüm işlemleri (tekrarlayan dahil) al
   const currentMonthTransactions = getTransactionsWithRecurring(filteredTransactions, monthStart, monthEnd)
     .filter(t => {
       const transactionDate = new Date(t.date);
       return transactionDate >= monthStart && transactionDate <= monthEnd;
     });
 
-  // Basit finansal hesaplamalar (bu ay için)
+  // Seçilen ay için finansal hesaplamalar
   const totalIncome = currentMonthTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -149,9 +150,40 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
             <h1 className="text-2xl font-bold mb-2">FinMate Dashboard</h1>
-            <p className="text-blue-100">Finansal durumunuzun özeti</p>
+            <p className="text-blue-100">
+              {[
+                'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+                'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+              ][selectedMonth]} {selectedYear} - Finansal Özet
+            </p>
           </div>
-          <div>
+          <div className="flex space-x-3">
+            {/* Ay Seçici */}
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="px-3 py-2 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              {[
+                'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+                'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+              ].map((month, index) => (
+                <option key={index} value={index}>{month}</option>
+              ))}
+            </select>
+            
+            {/* Yıl Seçici */}
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="px-3 py-2 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            
+            {/* Kişi Seçici */}
             <select
               value={selectedPerson}
               onChange={(e) => setSelectedPerson(e.target.value)}

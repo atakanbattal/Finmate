@@ -32,17 +32,22 @@ const Transactions = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Filter transactions based on current filters and search
-  let allTransactions = transactions;
+  let baseTransactions = transactions;
+  
+  // İlk olarak sadece orijinal işlemleri al (tekrarlayan örnekleri değil)
+  const originalTransactions = baseTransactions.filter(t => !t.isRecurringInstance);
+  
+  let allTransactions = originalTransactions;
   
   // Include recurring instances if date filter is applied
   if (filters.dateRange !== 'all') {
-    allTransactions = filterTransactionsByDate(transactions, filters.dateRange);
+    allTransactions = filterTransactionsByDate(originalTransactions, filters.dateRange);
   } else {
     // For 'all' range, include recurring instances for current year
     const currentYear = new Date().getFullYear();
     const yearStart = new Date(currentYear, 0, 1);
     const yearEnd = new Date(currentYear, 11, 31);
-    allTransactions = getTransactionsWithRecurring(transactions, yearStart, yearEnd);
+    allTransactions = getTransactionsWithRecurring(originalTransactions, yearStart, yearEnd);
   }
   
   const filteredTransactions = allTransactions.filter(transaction => {
@@ -697,7 +702,11 @@ const Transactions = () => {
                       <button
                         onClick={() => {
                           if (confirm('Bu işlemi silmek istediğinizden emin misiniz?')) {
-                            actions.deleteTransaction(transaction.id);
+                            // Tekrarlayan işlem örneği ise parent'ı sil, değilse kendisini sil
+                            const idToDelete = transaction.isRecurringInstance 
+                              ? transaction.parentRecurringId 
+                              : transaction.id;
+                            actions.deleteTransaction(idToDelete);
                           }
                         }}
                         className="p-1 text-gray-400 hover:text-danger-600"

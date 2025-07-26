@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Plus, 
   Target, 
@@ -38,13 +38,26 @@ const Goals = () => {
   const GoalModal = ({ goal, onClose }) => {
     const [useCashAndInvestments, setUseCashAndInvestments] = useState(false);
     
-    // Dashboard kartlarından AYNI değerleri kullan - shared calculation function ile
-    const currentDate = new Date();
-    const cashData = calculateCashManagementData(state, investmentTypes, currentDate.getMonth(), currentDate.getFullYear());
+    // Dashboard kartlarından AYNI değerleri kullan - shared calculation function ile (ERROR HANDLING)
+    const cashData = useMemo(() => {
+      try {
+        const currentDate = new Date();
+        return calculateCashManagementData(state, investmentTypes, currentDate.getMonth(), currentDate.getFullYear());
+      } catch (error) {
+        console.error('Error calculating cash management data in Goals:', error);
+        // Fallback values to prevent white screen
+        return {
+          availableCash: 0,
+          totalWealth: 0,
+          totalInvestmentValue: 0,
+          totalInvestmentCost: 0
+        };
+      }
+    }, [state.transactions, state.investments]);
     
     // Dashboard kartlarından gelen değerler
-    const availableCash = cashData.availableCash; // "Mevcut Nakit" kartı değeri
-    const totalWealth = cashData.totalWealth; // "Toplam Servet" kartı değeri
+    const availableCash = cashData.availableCash || 0; // "Mevcut Nakit" kartı değeri
+    const totalWealth = cashData.totalWealth || 0; // "Toplam Servet" kartı değeri
     
     console.log('Dashboard card values:');
     console.log('Mevcut Nakit (availableCash):', availableCash);

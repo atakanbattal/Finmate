@@ -444,6 +444,7 @@ export const investmentTypes = {
 };
 
 const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
+  console.log('🔍 DYNAMICINVESTMENTFORM RENDER - Gelen investment prop:', investment);
   const [investmentType, setInvestmentType] = useState(investment?.type || '');
   const [formData, setFormData] = useState(() => {
     if (investment) {
@@ -453,46 +454,13 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       console.log('🔍 Investment data:', investment.data);
       console.log('🔍 Investment details:', investment.details);
       
+      // 🔍 SORUN ÇÖZÜLDÜ: Investment objesi data/details alanlarına sahip değil!
+      // Gerçek investment yapısı: {id, name, type, amount, currentValue, purchaseDate, userId, notes}
       const initialData = {
         name: investment.name || '',
         amount: investment.amount?.toString() || '',
-        // Investment data'dan tüm alanları yükle
-        ...investment.data || {},
-        // Details'den de tüm alanları yükle
-        ...investment.details || {},
-        // Yatırım türüne özel alanları kontrol et ve güvenli yükle
-        ...(investment.type === 'stock' && {
-          stockPicker: investment.data?.stockPicker || investment.details?.stockPicker || null,
-          lotCount: (investment.data?.lotCount || investment.details?.lotCount || '').toString(),
-          pricePerLot: (investment.data?.pricePerLot || investment.details?.pricePerLot || '').toString(),
-          currentPricePerLot: (investment.data?.currentPricePerLot || investment.details?.currentPricePerLot || investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'crypto' && {
-          cryptoPicker: investment.data?.cryptoPicker || investment.details?.cryptoPicker || null,
-          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
-          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
-          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'gold' && {
-          goldPicker: investment.data?.goldPicker || investment.details?.goldPicker || null,
-          weight: (investment.data?.weight || investment.details?.weight || '').toString(),
-          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
-          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'fund' && {
-          fundPicker: investment.data?.fundPicker || investment.details?.fundPicker || null,
-          units: (investment.data?.units || investment.details?.units || '').toString(),
-          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
-          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'deposit' && {
-          name: investment.data?.name || investment.details?.name || investment.name || '',
-          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
-          interestRate: (investment.data?.interestRate || investment.details?.interestRate || '').toString(),
-          startDate: investment.data?.startDate || investment.details?.startDate || '',
-          termMonths: (investment.data?.termMonths || investment.details?.termMonths || '').toString(),
-          interestType: investment.data?.interestType || investment.details?.interestType || 'simple'
-        })
+        currentValue: investment.currentValue?.toString() || '',
+        notes: investment.notes || ''
       };
       
       console.log('✅ Form data initialized:', initialData);
@@ -511,43 +479,8 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       const newFormData = {
         name: investment.name || '',
         amount: investment.amount?.toString() || '',
-        // Investment data'dan tüm alanları yükle
-        ...investment.data || {},
-        // Details'den de tüm alanları yükle
-        ...investment.details || {},
-        // Yatırım türüne özel alanları kontrol et ve güvenli yükle
-        ...(investment.type === 'stock' && {
-          stockPicker: investment.data?.stockPicker || investment.details?.stockPicker || null,
-          lotCount: (investment.data?.lotCount || investment.details?.lotCount || '').toString(),
-          pricePerLot: (investment.data?.pricePerLot || investment.details?.pricePerLot || '').toString(),
-          currentPricePerLot: (investment.data?.currentPricePerLot || investment.details?.currentPricePerLot || investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'crypto' && {
-          cryptoPicker: investment.data?.cryptoPicker || investment.details?.cryptoPicker || null,
-          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
-          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
-          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'gold' && {
-          goldPicker: investment.data?.goldPicker || investment.details?.goldPicker || null,
-          weight: (investment.data?.weight || investment.details?.weight || '').toString(),
-          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
-          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'fund' && {
-          fundPicker: investment.data?.fundPicker || investment.details?.fundPicker || null,
-          units: (investment.data?.units || investment.details?.units || '').toString(),
-          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
-          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
-        }),
-        ...(investment.type === 'deposit' && {
-          name: investment.data?.name || investment.details?.name || investment.name || '',
-          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
-          interestRate: (investment.data?.interestRate || investment.details?.interestRate || '').toString(),
-          startDate: investment.data?.startDate || investment.details?.startDate || '',
-          termMonths: (investment.data?.termMonths || investment.details?.termMonths || '').toString(),
-          interestType: investment.data?.interestType || investment.details?.interestType || 'simple'
-        })
+        currentValue: investment.currentValue?.toString() || '',
+        notes: investment.notes || ''
       };
       
       console.log('🔄 New form data loaded:', newFormData);

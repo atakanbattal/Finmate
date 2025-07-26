@@ -446,6 +446,10 @@ const Investments = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log('🔧 DÜZENLE BUTONU TIKLANDI - Investment objesi:', investment);
+                        console.log('🔧 Investment type:', investment.type);
+                        console.log('🔧 Investment data:', investment.data);
+                        console.log('🔧 Investment details:', investment.details);
                         setEditingInvestment(investment);
                       }}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

@@ -346,6 +346,41 @@ export const investmentTypes = {
       };
     }
   },
+  'fund': {
+    name: 'Yatırım Fonu',
+    fields: [
+      { key: 'fundPicker', label: 'Yatırım Fonu', type: 'fundpicker', required: true },
+      { key: 'amount', label: 'Yatırılan Tutar (₺)', type: 'number', required: true },
+      { key: 'purchasePrice', label: 'Alış Fiyatı (₺)', type: 'number', step: '0.0001', required: true },
+      { key: 'currentPrice', label: 'Güncel Fiyat (₺)', type: 'number', step: '0.0001', placeholder: 'Manuel güncel fiyat girin' }
+    ],
+    calculate: (data, purchaseDate, investmentAmount) => {
+      const amount = parseFloat(data.amount) || 0;
+      const purchasePrice = parseFloat(data.purchasePrice) || 0;
+      const currentPrice = parseFloat(data.currentPrice) || purchasePrice;
+      
+      // Fon bilgisi
+      const fundInfo = data.fundPicker;
+      
+      // Hesaplamalar
+      const units = purchasePrice > 0 ? amount / purchasePrice : 0;
+      const currentValue = units * currentPrice;
+      const gain = currentValue - amount;
+      const gainPercent = amount > 0 ? (gain / amount) * 100 : 0;
+      
+      let extraInfo = '';
+      if (fundInfo) {
+        extraInfo = `${fundInfo.name} - ${units.toFixed(4)} pay: ₺${currentPrice.toFixed(4)} (${gain >= 0 ? '+' : ''}₺${gain.toFixed(2)} / ${gainPercent >= 0 ? '+' : ''}${gainPercent.toFixed(2)}%)`;
+      }
+      
+      return {
+        currentValue: currentValue,
+        gain: gain,
+        gainPercent: gainPercent,
+        extraInfo: extraInfo
+      };
+    }
+  },
   'deposit': {
     name: 'Vadeli Mevduat',
     fields: [
@@ -457,19 +492,26 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
         ...investment.details || {},
         // Yatırım türüne özel alanları kontrol et
         ...(investment.type === 'stock' && {
-          companyName: investment.data?.companyName || investment.details?.companyName || '',
+          stockPicker: investment.data?.stockPicker || investment.details?.stockPicker || null,
           lotCount: investment.data?.lotCount?.toString() || investment.details?.lotCount?.toString() || '',
           pricePerLot: investment.data?.pricePerLot?.toString() || investment.details?.pricePerLot?.toString() || '',
-          currentPrice: investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
+          currentPricePerLot: investment.data?.currentPricePerLot?.toString() || investment.details?.currentPricePerLot?.toString() || investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
         }),
         ...(investment.type === 'crypto' && {
-          coinName: investment.data?.coinName || investment.details?.coinName || '',
+          cryptoPicker: investment.data?.cryptoPicker || investment.details?.cryptoPicker || null,
           amount: investment.data?.amount?.toString() || investment.details?.amount?.toString() || investment.amount?.toString() || '',
           purchasePrice: investment.data?.purchasePrice?.toString() || investment.details?.purchasePrice?.toString() || '',
           currentPrice: investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
         }),
         ...(investment.type === 'gold' && {
+          goldPicker: investment.data?.goldPicker || investment.details?.goldPicker || null,
           weight: investment.data?.weight?.toString() || investment.details?.weight?.toString() || '',
+          purchasePrice: investment.data?.purchasePrice?.toString() || investment.details?.purchasePrice?.toString() || '',
+          currentPrice: investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
+        }),
+        ...(investment.type === 'fund' && {
+          fundPicker: investment.data?.fundPicker || investment.details?.fundPicker || null,
+          amount: investment.data?.amount?.toString() || investment.details?.amount?.toString() || investment.amount?.toString() || '',
           purchasePrice: investment.data?.purchasePrice?.toString() || investment.details?.purchasePrice?.toString() || '',
           currentPrice: investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
         }),
@@ -621,6 +663,18 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
         const stockInfo = formData.stockPicker;
         const stockName = stockInfo?.name || stockInfo?.symbol || 'Hisse Senedi';
         investmentName = `${stockName} - ${formData.lotCount || 0} lot`;
+      } else if (investmentType === 'fund') {
+        const fundInfo = formData.fundPicker;
+        const fundName = fundInfo?.name || fundInfo?.symbol || 'Yatırım Fonu';
+        investmentName = `${fundName} - ₺${calculatedAmount.toLocaleString('tr-TR')}`;
+      } else if (investmentType === 'crypto') {
+        const cryptoInfo = formData.cryptoPicker;
+        const cryptoName = cryptoInfo?.name || cryptoInfo?.symbol || 'Kripto Para';
+        investmentName = `${cryptoName} - ${formData.amount || 0} ${cryptoInfo?.symbol || 'COIN'}`;
+      } else if (investmentType === 'gold') {
+        const goldInfo = formData.goldPicker;
+        const goldName = goldInfo?.name || 'Altın';
+        investmentName = `${goldName} - ${formData.weight || 0} gram`;
       } else {
         investmentName = typeConfig.name;
       }
@@ -686,6 +740,27 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
                     value={formData[field.key]}
                     onChange={(stockData) => handleInputChange(field.key, stockData)}
                     placeholder={field.placeholder || 'Hisse senedi seçin...'}
+                  />
+                ) : field.type === 'fundpicker' ? (
+                  <AssetPicker
+                    assetType="fund"
+                    value={formData[field.key]}
+                    onChange={(fundData) => handleInputChange(field.key, fundData)}
+                    placeholder={field.placeholder || 'Yatırım fonu seçin...'}
+                  />
+                ) : field.type === 'cryptopicker' ? (
+                  <AssetPicker
+                    assetType="crypto"
+                    value={formData[field.key]}
+                    onChange={(cryptoData) => handleInputChange(field.key, cryptoData)}
+                    placeholder={field.placeholder || 'Kripto para seçin...'}
+                  />
+                ) : field.type === 'goldpicker' ? (
+                  <AssetPicker
+                    assetType="gold"
+                    value={formData[field.key]}
+                    onChange={(goldData) => handleInputChange(field.key, goldData)}
+                    placeholder={field.placeholder || 'Altın varlığı seçin...'}
                   />
                 ) : field.type === 'assetpicker' ? (
                   <AssetPicker

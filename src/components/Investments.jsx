@@ -182,11 +182,26 @@ const Investments = () => {
                 {formatCurrency(currentValue)}
               </p>
               {/* Debug: Eğer değerler aynıysa uyarı göster */}
-              {totalInvested === currentValue && totalInvested > 0 && (
-                <p className="text-xs text-yellow-600 mt-1">
-                  ⚠️ Güncel değerler girilmemiş
-                </p>
-              )}
+              {(() => {
+                // Tüm yatırımlar için manuel güncel değer kontrolü
+                const hasAnyManualValues = investments.some(inv => 
+                  (inv.type === 'stock' && inv.data?.currentPricePerLot > 0) ||
+                  (inv.type === 'fund' && inv.data?.currentPrice > 0) ||
+                  (inv.type === 'crypto' && inv.data?.currentPrice > 0) ||
+                  (inv.type === 'gold' && inv.data?.currentPrice > 0) ||
+                  (inv.type === 'deposit') || // Mevduat için hesaplanır
+                  (inv.type === 'other' && inv.data?.currentValue > 0)
+                );
+                
+                // Eğer hiç manuel değer girilmemişse ve değerler aynıysa uyarı göster
+                const shouldShowWarning = !hasAnyManualValues && Math.abs(totalInvested - currentValue) < 0.01 && totalInvested > 0;
+                
+                return shouldShowWarning ? (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    ⚠️ Güncel değerler girilmemiş
+                  </p>
+                ) : null;
+              })()}
             </div>
             <div className="p-3 rounded-full bg-yellow-100">
               <TrendingUp className="h-6 w-6 text-yellow-600" />
@@ -342,12 +357,26 @@ const Investments = () => {
                     </div>
                     
                     {/* Debug: Güncel değer durumu */}
-                    {currentValue === totalInvested && (
-                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                        <p className="text-yellow-700 font-medium">⚠️ Güncel değer girilmemiş</p>
-                        <p className="text-yellow-600 mt-1">Bu yatırımı düzenleyerek güncel değerini girin</p>
-                      </div>
-                    )}
+                    {(() => {
+                      // Manuel güncel değer girilmiş mi kontrol et
+                      const hasManualCurrentValue = 
+                        (investment.type === 'stock' && investment.data?.currentPricePerLot > 0) ||
+                        (investment.type === 'fund' && investment.data?.currentPrice > 0) ||
+                        (investment.type === 'crypto' && investment.data?.currentPrice > 0) ||
+                        (investment.type === 'gold' && investment.data?.currentPrice > 0) ||
+                        (investment.type === 'deposit') || // Mevduat için hesaplanır
+                        (investment.type === 'other' && investment.data?.currentValue > 0);
+                      
+                      // Eğer manuel değer girilmemişse ve güncel değer yatırılan tutara eşitse uyarı göster
+                      const shouldShowWarning = !hasManualCurrentValue && Math.abs(currentValue - totalInvested) < 0.01;
+                      
+                      return shouldShowWarning ? (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                          <p className="text-yellow-700 font-medium">⚠️ Güncel değer girilmemiş</p>
+                          <p className="text-yellow-600 mt-1">Bu yatırımı düzenleyerek güncel değerini girin</p>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                   
                   {/* Value & Gain */}

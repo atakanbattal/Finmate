@@ -3,19 +3,18 @@
 
 export const INVESTMENT_FUNDS = [
   // İş Portföy Fonları - Ekran görüntülerinden alınan gerçek fonlar
-  { id: 'ijc', symbol: 'IJC', name: 'İJC - İş Portföy Yarı İle...', type: 'balanced', category: 'Karma', risk: 'Orta', price: 1155.35, change: 160.70, changePercent: 16.16 },
-  { id: 'ipv', symbol: 'IPV', name: 'İPV - İş Portföy Eurob...', type: 'bond', category: 'Borçlanma', risk: 'Düşük', price: 1104.42, change: 154.57, changePercent: 16.27 },
-  { id: 'tau', symbol: 'TAU', name: 'TAU - İş Portföy BIST B...', type: 'index', category: 'Endeks', risk: 'Yüksek', price: 1138.05, change: 138.30, changePercent: 13.83 },
-  { id: 'idh', symbol: 'IDH', name: 'İDH - İş Portföy BIST 10...', type: 'index', category: 'Endeks', risk: 'Yüksek', price: 1111.79, change: 116.39, changePercent: 11.69 },
-  { id: 'kph', symbol: 'KPH', name: 'KPH - İş Portföy Kar P...', type: 'balanced', category: 'Karma', risk: 'Orta', price: 1068.15, change: 109.86, changePercent: 11.46 },
-  { id: 'ibb', symbol: 'IBB', name: 'İBB - İş Portföy Robofon...', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek', price: 1089.59, change: 91.72, changePercent: 9.19 },
-  { id: 'ti2', symbol: 'TI2', name: 'TI2 - İş Portföy Hisse Se...', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek', price: 1072.79, change: 82.74, changePercent: 8.36 },
-  { id: 'aft', symbol: 'AFT', name: 'AFT - AK Portföy Yeni...', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek', price: 2009.02, change: 463.06, changePercent: 29.95 },
-  { id: 'yay', symbol: 'YAY', name: 'YAY - Yapı Kredi Portf...', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek', price: 2027.99, change: 388.72, changePercent: 23.71 },
-  { id: 'tmg', symbol: 'TMG', name: 'TMG - İş Portföy Yaba...', type: 'international', category: 'Uluslararası', risk: 'Yüksek', price: 1257.40, change: 257.81, changePercent: 25.79 },
-  { id: 'tte', symbol: 'TTE', name: 'TTE - İş Portföy BIST T...', type: 'index', category: 'Endeks', risk: 'Yüksek', price: 1257.44, change: 257.58, changePercent: 25.76 },
-  { id: 'ti1', symbol: 'TI1', name: 'TI1 - İş Portföy Para Pi...', type: 'money_market', category: 'Para Piyasası', risk: 'Çok Düşük', price: 1100.39, change: 228.13, changePercent: 26.15 },
-  { id: 'tiv', symbol: 'TIV', name: 'TIV - İş Portföy Kısa V...', type: 'bond', category: 'Borçlanma', risk: 'Düşük', price: 1073.96, change: 197.65, changePercent: 22.55 },
+  { id: 'gpa', symbol: 'GPA', name: 'GPA - GPY EUROBOND BORÇ.', type: 'bond', category: 'Borçlanma', risk: 'Düşük', price: 5033.48, change: 37.75, changePercent: 0.76 },
+  { id: 'tgt', symbol: 'TGT', name: 'TGT - GPY KISA VADELİ BORÇ. ARAÇ. FONU', type: 'bond', category: 'Borçlanma', risk: 'Düşük', price: 5027.40, change: 27.46, changePercent: 0.55 },
+  { id: 'aft', symbol: 'AFT', name: 'AFT - AK PORTFÖY YENİ TEKNOLOJİLER YABANC', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek', price: 5000.36, change: 0.88, changePercent: 0.02 },
+  { id: 'kph', symbol: 'KPH', name: 'KPH - İŞ PORTFÖY KAR PAYI ÖDEYEN HİSSE SE', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek', price: 4994.73, change: -4.79, changePercent: -0.10 },
+  { id: 'gtl', symbol: 'GTL', name: 'GTL - GPY 1. PARA PİYASASI (TL) FONU', type: 'money_market', category: 'Para Piyasası', risk: 'Çok Düşük', price: 460153.27, change: 57.39, changePercent: 0.01 },
+  { id: 'tmg', symbol: 'TMG', name: 'TMG - İŞ PORTFÖY YABANCI HİSSE SENEDİ FON', type: 'international', category: 'Uluslararası', risk: 'Yüksek', price: 5130.87, change: 130.88, changePercent: 2.62 },
+  { id: 'tte', symbol: 'TTE', name: 'TTE - İŞ PORTFÖY BİST TEKNOLOJİ AĞIRLIK S', type: 'index', category: 'Endeks', risk: 'Yüksek', price: 5082.82, change: 83.71, changePercent: 1.67 },
+  { id: 'yay', symbol: 'YAY', name: 'YAY - YAPI KREDİ PORTFÖY YABANCI TEKNOLOJİ', type: 'international', category: 'Uluslararası', risk: 'Yüksek', price: 5050.64, change: -19.32, changePercent: -0.38 },
+  { id: 'ti2', symbol: 'TI2', name: 'TI2 - İŞ PORTFÖY HİSSE SENEDİ (TL) FONU', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek', price: 4989.19, change: -10.77, changePercent: -0.22 },
+  { id: 'tau', symbol: 'TAU', name: 'TAU - İŞ PORTFÖY BİST BANKA ENDEKSİ HİSSE', type: 'index', category: 'Endeks', risk: 'Yüksek', price: 4963.94, change: -35.72, changePercent: -0.71 },
+  { id: 'ijc', symbol: 'IJC', name: 'IJC - İŞ PORTFÖY YARI İLETKEN TEKNOLOJİLE', type: 'sector', category: 'Sektörel', risk: 'Yüksek', price: 4950.54, change: -42.51, changePercent: -0.85 },
+  { id: 'idh', symbol: 'IDH', name: 'IDH - İŞ PORTFÖY BİST 100 DIŞI ŞİRKETLER', type: 'index', category: 'Endeks', risk: 'Yüksek', price: 4854.33, change: -143.54, changePercent: -2.87 },
   
   // Diğer Popüler Fonlar
   { id: 'akb_his', symbol: 'AKB-HIS', name: 'Akbank Hisse Senedi Fonu', type: 'equity', category: 'Hisse Senedi', risk: 'Yüksek' },

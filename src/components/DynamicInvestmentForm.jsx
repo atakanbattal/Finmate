@@ -26,9 +26,21 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       console.log('🔍 investment.currentPrice:', investment.currentPrice);
       console.log('🔍 investment.fundCode:', investment.fundCode);
       console.log('🔍 investment.fundName:', investment.fundName);
+      
+      // TÜM OLASI ALAN İSİMLERİNİ KONTROL ET
+      console.log('🔍 CHECKING ALL POSSIBLE FIELD NAMES:');
+      console.log('🔍 investment.price:', investment.price);
+      console.log('🔍 investment.buyPrice:', investment.buyPrice);
+      console.log('🔍 investment.unitPrice:', investment.unitPrice);
+      console.log('🔍 investment.pricePerUnit:', investment.pricePerUnit);
+      console.log('🔍 investment.purchasePricePerUnit:', investment.purchasePricePerUnit);
+      console.log('🔍 investment.data:', investment.data);
+      console.log('🔍 investment.details:', investment.details);
     }
     
     console.log('🔍 FULL INVESTMENT OBJECT STRUCTURE:', JSON.stringify(investment, null, 2));
+    console.log('🔍 OBJECT KEYS:', Object.keys(investment));
+    console.log('🔍 OBJECT VALUES:', Object.values(investment));
   }
 
   const [investmentType, setInvestmentType] = useState(investment?.type || '');

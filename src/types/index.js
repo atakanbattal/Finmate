@@ -72,7 +72,9 @@ export const createInvestment = (data = {}) => ({
   userId: data.userId || 'default',
   notes: data.notes || '',
   createdAt: data.createdAt || new Date().toISOString(),
-  updatedAt: new Date().toISOString()
+  updatedAt: new Date().toISOString(),
+  // TÜM FORM ALANLARINI KAYDET - ALIŞ FİYATI VE DETAYLAR İÇİN
+  ...data // Bu satır tüm ek alanları (purchasePrice, units, fundCode vb.) investment objesine ekler
 });
 
 // Default data structure for a financial goal

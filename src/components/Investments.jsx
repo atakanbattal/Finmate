@@ -12,7 +12,6 @@ import {
   Info
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import InvestmentModal from './InvestmentModal';
 import InvestmentDetailModal from './InvestmentDetailModal';
 import { createInvestment } from '../types';
 import { formatCurrency, calculatePortfolioValueDynamic, calculateInvestmentGainsDynamic } from '../utils/calculations';

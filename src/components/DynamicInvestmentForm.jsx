@@ -346,41 +346,6 @@ export const investmentTypes = {
       };
     }
   },
-  'fund': {
-    name: 'Yatırım Fonu',
-    fields: [
-      { key: 'fundPicker', label: 'Yatırım Fonu', type: 'fundpicker', required: true },
-      { key: 'amount', label: 'Yatırılan Tutar (₺)', type: 'number', required: true },
-      { key: 'purchasePrice', label: 'Alış Fiyatı (₺)', type: 'number', step: '0.0001', required: true },
-      { key: 'currentPrice', label: 'Güncel Fiyat (₺)', type: 'number', step: '0.0001', placeholder: 'Manuel güncel fiyat girin' }
-    ],
-    calculate: (data, purchaseDate, investmentAmount) => {
-      const amount = parseFloat(data.amount) || 0;
-      const purchasePrice = parseFloat(data.purchasePrice) || 0;
-      const currentPrice = parseFloat(data.currentPrice) || purchasePrice;
-      
-      // Fon bilgisi
-      const fundInfo = data.fundPicker;
-      
-      // Hesaplamalar
-      const units = purchasePrice > 0 ? amount / purchasePrice : 0;
-      const currentValue = units * currentPrice;
-      const gain = currentValue - amount;
-      const gainPercent = amount > 0 ? (gain / amount) * 100 : 0;
-      
-      let extraInfo = '';
-      if (fundInfo) {
-        extraInfo = `${fundInfo.name} - ${units.toFixed(4)} pay: ₺${currentPrice.toFixed(4)} (${gain >= 0 ? '+' : ''}₺${gain.toFixed(2)} / ${gainPercent >= 0 ? '+' : ''}${gainPercent.toFixed(2)}%)`;
-      }
-      
-      return {
-        currentValue: currentValue,
-        gain: gain,
-        gainPercent: gainPercent,
-        extraInfo: extraInfo
-      };
-    }
-  },
   'deposit': {
     name: 'Vadeli Mevduat',
     fields: [

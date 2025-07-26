@@ -63,6 +63,9 @@ export const createTransaction = (type, data = {}) => ({
 
 // Default data structure for an investment
 export const createInvestment = (data = {}) => ({
+  // ÖNCE TÜM FORM ALANLARINI AL (purchasePrice, units, fundCode vb.)
+  ...data,
+  // SONRA TEMEL ALANLARI DEFAULT DEĞERLERLE OVERRIDE ET (sadece boşsa)
   id: data.id || crypto.randomUUID(),
   name: data.name || '',
   type: data.type || '',
@@ -72,9 +75,7 @@ export const createInvestment = (data = {}) => ({
   userId: data.userId || 'default',
   notes: data.notes || '',
   createdAt: data.createdAt || new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  // TÜM FORM ALANLARINI KAYDET - ALIŞ FİYATI VE DETAYLAR İÇİN
-  ...data // Bu satır tüm ek alanları (purchasePrice, units, fundCode vb.) investment objesine ekler
+  updatedAt: new Date().toISOString()
 });
 
 // Default data structure for a financial goal

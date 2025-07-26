@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { createGoal, GOAL_CATEGORIES } from '../types';
-import { formatCurrency, calculateGoalProgress } from '../utils/calculations';
+import { formatCurrency, calculateCashManagementData } from '../utils/calculations';
+import { investmentTypes } from './DynamicInvestmentForm';
 
 const Goals = () => {
   const { state, actions } = useApp();
@@ -37,53 +38,17 @@ const Goals = () => {
   const GoalModal = ({ goal, onClose }) => {
     const [useCashAndInvestments, setUseCashAndInvestments] = useState(false);
     
-    // CashManagement kartlarından değerleri al - Toplam Servet ve Mevcut Nakit kartlarının toplamını kullan
-    const calculateAvailableCash = () => {
-      console.log('Calculating available cash from CashManagement cards...');
-      console.log('Total transactions:', state.transactions.length);
-      
-      const totalIncome = state.transactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-      
-      const totalExpenses = state.transactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-      
-      // Yatırım maliyetini hesapla
-      const totalInvestmentCost = state.investments.reduce((sum, inv) => {
-        const amount = parseFloat(inv.amount) || 0;
-        return sum + amount;
-      }, 0);
-      
-      console.log('Total income:', totalIncome);
-      console.log('Total expenses:', totalExpenses);
-      console.log('Total investment cost:', totalInvestmentCost);
-      
-      // Mevcut nakit = gelir - gider - yatırım maliyeti (Mevcut Nakit kartı değeri)
-      const availableCash = Math.max(0, totalIncome - totalExpenses - totalInvestmentCost);
-      console.log('Available cash (Mevcut Nakit kartı):', availableCash);
-      
-      return isNaN(availableCash) ? 0 : availableCash;
-    };
-
-    // Calculate total investment value - GÜVENLİ HESAPLAMA (basit ama güvenli)
-    const calculateTotalInvestments = () => {
-      try {
-        return state.investments.reduce((total, investment) => {
-          const value = parseFloat(investment.currentValue) || parseFloat(investment.amount) || 0;
-          return total + value;
-        }, 0);
-      } catch (error) {
-        console.error('Error calculating investment total:', error);
-        return 0;
-      }
-    };
-
-    const availableCash = calculateAvailableCash(); // Mevcut Nakit kartı değeri
-    const totalInvestments = calculateTotalInvestments();
-    // Toplam servet = mevcut nakit + yatırım değeri (Toplam Servet kartı değeri)
-    const totalWealth = availableCash + totalInvestments;
+    // Dashboard kartlarından AYNI değerleri kullan - shared calculation function ile
+    const currentDate = new Date();
+    const cashData = calculateCashManagementData(state, investmentTypes, currentDate.getMonth(), currentDate.getFullYear());
+    
+    // Dashboard kartlarından gelen değerler
+    const availableCash = cashData.availableCash; // "Mevcut Nakit" kartı değeri
+    const totalWealth = cashData.totalWealth; // "Toplam Servet" kartı değeri
+    
+    console.log('Dashboard card values:');
+    console.log('Mevcut Nakit (availableCash):', availableCash);
+    console.log('Toplam Servet (totalWealth):', totalWealth);
     
     // Kullanıcının talebi: Toplam Servet + Mevcut Nakit kartlarının toplamını kullan
     const availableAmount = useCashAndInvestments ? (totalWealth + availableCash) : availableCash;

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import SavingsSettings from './SavingsSettings';
 import { investmentTypes } from './DynamicInvestmentForm';
-import { calculatePortfolioValueDynamic, getTransactionsWithRecurring, formatCurrency } from '../utils/calculations';
+import { calculateCashManagementData, formatCurrency } from '../utils/calculations';
 import {
   Wallet,
   TrendingUp,
@@ -24,92 +24,9 @@ const CashManagement = () => {
 
   // Removed - using direct month/year selection now
 
-  // Calculate cash and investment totals
+  // Calculate cash and investment totals using shared function
   const cashData = useMemo(() => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-
-    // Get date range for selected month/year (SIMPLIFIED like Dashboard)
-    const getDateRange = () => {
-      return {
-        start: new Date(selectedYear, selectedMonth, 1),
-        end: new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59)
-      };
-    };
-
-    const { start: startDate, end: endDate } = getDateRange();
-    
-    // Get transactions with recurring instances for selected period
-    const getFilteredTransactions = () => {
-      return getTransactionsWithRecurring(state.transactions, startDate, endDate);
-    };
-
-    const filteredTransactions = getFilteredTransactions();
-    
-    // Calculate totals - GÜVENLİ HESAPLAMA
-    const totalIncome = filteredTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    const totalExpenses = filteredTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    const netCashFlow = totalIncome - totalExpenses;
-    
-    // Calculate investment totals using same function as Investments section
-    const totalInvestmentValue = calculatePortfolioValueDynamic(state.investments, investmentTypes);
-    
-    const totalInvestmentCost = state.investments.reduce((sum, inv) => {
-      const amount = parseFloat(inv.amount) || 0;
-      return sum + amount;
-    }, 0);
-    
-    const investmentGainLoss = totalInvestmentValue - totalInvestmentCost;
-    
-
-    
-    // Calculate available cash from ALL transactions (not just current period) - GÜVENLİ HESAPLAMA
-    const allTimeIncome = state.transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    const allTimeExpenses = state.transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    const availableCash = Math.max(0, allTimeIncome - allTimeExpenses - totalInvestmentCost);
-    
-    // Total wealth = available cash + current investment value
-    const totalWealth = availableCash + totalInvestmentValue;
-    
-    // Calculate regular income/expenses for projection - GÜVENLİ HESAPLAMA
-    // Check for recurring transactions (either isRecurring=true or has recurring properties)
-    const regularIncome = filteredTransactions
-      .filter(t => t.type === 'income' && (t.isRecurring || t.recurring?.frequency))
-      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    const regularExpenses = filteredTransactions
-      .filter(t => t.type === 'expense' && (t.isRecurring || t.recurring?.frequency))
-      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    const monthlyNetRegular = regularIncome - regularExpenses;
-
-    return {
-      totalIncome,
-      totalExpenses,
-      netCashFlow,
-      availableCash,
-      totalInvestmentValue,
-      totalInvestmentCost,
-      investmentGainLoss,
-      totalWealth,
-      regularIncome,
-      regularExpenses,
-      monthlyNetRegular,
-      filteredTransactions
-    };
+    return calculateCashManagementData(state, investmentTypes, selectedMonth, selectedYear);
   }, [state.transactions, state.investments, selectedMonth, selectedYear]);
 
   // Calculate when cash flow will improve

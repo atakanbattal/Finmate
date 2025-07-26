@@ -348,6 +348,86 @@ export const getRecentTransactions = (transactions, limit = 10) => {
     .slice(0, limit);
 };
 
+// ===== SHARED CASH MANAGEMENT CALCULATIONS =====
+
+/**
+ * Calculate cash management data that should be consistent across components
+ * @param {Object} state - Application state with transactions and investments
+ * @param {Array} investmentTypes - Investment types for dynamic calculation
+ * @param {number} selectedMonth - Selected month (0-11)
+ * @param {number} selectedYear - Selected year
+ * @returns {Object} Cash management data
+ */
+export const calculateCashManagementData = (state, investmentTypes, selectedMonth = new Date().getMonth(), selectedYear = new Date().getFullYear()) => {
+  // Get date range for selected month/year
+  const startDate = new Date(selectedYear, selectedMonth, 1);
+  const endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
+  
+  // Get transactions with recurring instances for selected period
+  const filteredTransactions = getTransactionsWithRecurring(state.transactions, startDate, endDate);
+  
+  // Calculate totals - GÜVENLI HESAPLAMA
+  const totalIncome = filteredTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+  
+  const totalExpenses = filteredTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+  
+  const netCashFlow = totalIncome - totalExpenses;
+  
+  // Calculate investment totals using same function as Investments section
+  const totalInvestmentValue = calculatePortfolioValueDynamic(state.investments, investmentTypes);
+  
+  const totalInvestmentCost = state.investments.reduce((sum, inv) => {
+    const amount = parseFloat(inv.amount) || 0;
+    return sum + amount;
+  }, 0);
+  
+  const investmentGainLoss = totalInvestmentValue - totalInvestmentCost;
+  
+  // Calculate available cash from ALL transactions (not just current period) - GÜVENLI HESAPLAMA
+  const allTimeIncome = state.transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+  
+  const allTimeExpenses = state.transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+  
+  const availableCash = Math.max(0, allTimeIncome - allTimeExpenses - totalInvestmentCost);
+  
+  // Total wealth = available cash + current investment value
+  const totalWealth = availableCash + totalInvestmentValue;
+  
+  // Calculate regular income/expenses for projection - GÜVENLI HESAPLAMA
+  const regularIncome = filteredTransactions
+    .filter(t => t.type === 'income' && (t.isRecurring || t.recurring?.frequency))
+    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+  
+  const regularExpenses = filteredTransactions
+    .filter(t => t.type === 'expense' && (t.isRecurring || t.recurring?.frequency))
+    .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+  
+  const monthlyNetRegular = regularIncome - regularExpenses;
+
+  return {
+    totalIncome,
+    totalExpenses,
+    netCashFlow,
+    availableCash, // This is the "Mevcut Nakit" card value
+    totalInvestmentValue,
+    totalInvestmentCost,
+    investmentGainLoss,
+    totalWealth, // This is the "Toplam Servet" card value
+    regularIncome,
+    regularExpenses,
+    monthlyNetRegular,
+    filteredTransactions
+  };
+};
+
 // ===== DCA (Dollar Cost Averaging) Functions =====
 
 /**

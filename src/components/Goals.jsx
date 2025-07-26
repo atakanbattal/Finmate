@@ -67,22 +67,16 @@ const Goals = () => {
       return isNaN(availableCash) ? 0 : availableCash;
     };
 
-    // Calculate total investment value - GÜVENLİ HESAPLAMA (DCA-aware)
+    // Calculate total investment value - GÜVENLİ HESAPLAMA (basit ama güvenli)
     const calculateTotalInvestments = () => {
-      // CashManagement ile aynı hesaplama yöntemini kullan
-      const { calculatePortfolioValueDynamic } = require('../utils/calculations');
-      const { investmentTypes } = require('./DynamicInvestmentForm');
-      
       try {
-        const dynamicValue = calculatePortfolioValueDynamic(state.investments, investmentTypes);
-        return isNaN(dynamicValue) ? 0 : dynamicValue;
-      } catch (error) {
-        console.error('Error calculating portfolio value:', error);
-        // Fallback to basic calculation
         return state.investments.reduce((total, investment) => {
           const value = parseFloat(investment.currentValue) || parseFloat(investment.amount) || 0;
           return total + value;
         }, 0);
+      } catch (error) {
+        console.error('Error calculating investment total:', error);
+        return 0;
       }
     };
 

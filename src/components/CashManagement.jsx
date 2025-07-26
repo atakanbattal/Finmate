@@ -70,6 +70,19 @@ const CashManagement = () => {
     
     const investmentGainLoss = totalInvestmentValue - totalInvestmentCost;
     
+    // Calculate investment trend (change from previous month)
+    const previousMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+    const previousYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+    
+    // For trend calculation, we'll use a simplified approach:
+    // If we have gain/loss, show the percentage change as trend
+    const investmentReturnPercentage = totalInvestmentCost > 0 ? 
+      ((totalInvestmentValue - totalInvestmentCost) / totalInvestmentCost) * 100 : 0;
+    
+    // Calculate trend value as the gain/loss amount (this represents the "change")
+    const investmentTrendValue = investmentGainLoss;
+    const investmentTrend = investmentTrendValue >= 0 ? 'up' : 'down';
+    
     // Calculate available cash from ALL transactions (not just current period) - GÜVENLİ HESAPLAMA
     const allTimeIncome = state.transactions
       .filter(t => t.type === 'income')
@@ -108,7 +121,10 @@ const CashManagement = () => {
       regularIncome,
       regularExpenses,
       monthlyNetRegular,
-      filteredTransactions
+      filteredTransactions,
+      investmentTrend,
+      investmentTrendValue,
+      investmentReturnPercentage
     };
   }, [state.transactions, state.investments, selectedMonth, selectedYear]);
 
@@ -228,8 +244,8 @@ const CashManagement = () => {
           title="Yatırım Değeri"
           value={cashData.totalInvestmentValue}
           icon={TrendingUp}
-          trend={cashData.investmentGainLoss > 0 ? 'up' : 'down'}
-          trendValue={cashData.investmentGainLoss}
+          trend={cashData.investmentTrend}
+          trendValue={cashData.investmentTrendValue}
           color="blue"
         />
         <StatCard

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { createGoal, GOAL_CATEGORIES } from '../types';
-import { formatCurrency, calculateCashManagementData } from '../utils/calculations';
+import { formatCurrency, calculateCashManagementData, calculateGoalProgress } from '../utils/calculations';
 import { investmentTypes } from './DynamicInvestmentForm';
 
 const Goals = () => {

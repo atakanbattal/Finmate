@@ -448,43 +448,173 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
   const [investmentType, setInvestmentType] = useState(investment?.type || '');
   const [formData, setFormData] = useState(() => {
     if (investment) {
-      // Mevcut yatırımı düzenleme modu - Tüm alanları yükle
-      console.log('🔍 Loading investment for editing:', investment);
+      // Mevcut yatırımı düzenleme modu - Investment type'a göre TÜM alanları yükle
+      console.log('🔍 FORM DATA INITIALIZATION - Loading investment for editing:', investment);
       console.log('🔍 Investment type:', investment.type);
-      console.log('🔍 Investment data:', investment.data);
-      console.log('🔍 Investment details:', investment.details);
       
-      // 🔍 SORUN ÇÖZÜLDÜ: Investment objesi data/details alanlarına sahip değil!
-      // Gerçek investment yapısı: {id, name, type, amount, currentValue, purchaseDate, userId, notes}
+      // Investment type'a göre field tanımlarını al
+      const typeConfig = investmentTypes[investment.type];
+      console.log('🔍 Type config fields:', typeConfig?.fields);
+      
+      // Temel alanları yükle
       const initialData = {
         name: investment.name || '',
-        amount: investment.amount?.toString() || '',
-        currentValue: investment.currentValue?.toString() || '',
         notes: investment.notes || ''
       };
       
-      console.log('✅ Form data initialized:', initialData);
+      // Investment type'a göre özel alanları yükle
+      if (typeConfig && typeConfig.fields) {
+        typeConfig.fields.forEach(field => {
+          const fieldKey = field.key;
+          
+          // Investment objesinden değeri al
+          if (investment.hasOwnProperty(fieldKey)) {
+            if (field.type === 'number') {
+              initialData[fieldKey] = investment[fieldKey]?.toString() || '';
+            } else {
+              initialData[fieldKey] = investment[fieldKey] || '';
+            }
+            console.log(`✅ Loaded field ${fieldKey}:`, investment[fieldKey]);
+          } else {
+            // Özel durumlar için mapping
+            switch (fieldKey) {
+              case 'stockPicker':
+                if (investment.symbol) {
+                  initialData[fieldKey] = investment.symbol;
+                  console.log(`✅ Loaded stockPicker from symbol:`, investment.symbol);
+                }
+                break;
+              case 'fundPicker':
+                if (investment.fundCode) {
+                  initialData[fieldKey] = investment.fundCode;
+                  console.log(`✅ Loaded fundPicker from fundCode:`, investment.fundCode);
+                }
+                break;
+              case 'cryptoPicker':
+                if (investment.cryptoSymbol) {
+                  initialData[fieldKey] = investment.cryptoSymbol;
+                  console.log(`✅ Loaded cryptoPicker from cryptoSymbol:`, investment.cryptoSymbol);
+                }
+                break;
+              case 'goldPicker':
+                if (investment.goldType) {
+                  initialData[fieldKey] = investment.goldType;
+                  console.log(`✅ Loaded goldPicker from goldType:`, investment.goldType);
+                }
+                break;
+              case 'amount':
+                // Yatırım fonu için units kullan, diğerleri için amount
+                if (investment.type === 'fund' && investment.units) {
+                  initialData['units'] = investment.units?.toString() || '';
+                  console.log(`✅ Loaded units for fund:`, investment.units);
+                } else if (investment.amount) {
+                  initialData[fieldKey] = investment.amount?.toString() || '';
+                  console.log(`✅ Loaded amount:`, investment.amount);
+                }
+                break;
+              case 'currentValue':
+                if (investment.currentValue) {
+                  initialData[fieldKey] = investment.currentValue?.toString() || '';
+                  console.log(`✅ Loaded currentValue:`, investment.currentValue);
+                }
+                break;
+              default:
+                console.log(`⚠️ Field ${fieldKey} not found in investment object`);
+                break;
+            }
+          }
+        });
+      }
+      
+      console.log('✅ COMPLETE Form data initialized:', initialData);
       return initialData;
     }
     console.log('⚠️ No investment provided, returning empty form data');
     return {};
   });
 
-  // Investment prop'u değiştiğinde form'u yeniden yükle
+  // Investment prop'u değiştiğinde form data'yı yeniden yükle
   useEffect(() => {
     if (investment) {
-      console.log('🔄 Investment prop changed, reloading form data:', investment);
-      setInvestmentType(investment.type || '');
+      console.log('🔄 USEEFFECT - Investment prop changed, reloading form data:', investment);
       
-      const newFormData = {
+      // Investment type'a göre field tanımlarını al
+      const typeConfig = investmentTypes[investment.type];
+      console.log('🔄 USEEFFECT - Type config fields:', typeConfig?.fields);
+      
+      // Temel alanları yükle
+      const initialData = {
         name: investment.name || '',
-        amount: investment.amount?.toString() || '',
-        currentValue: investment.currentValue?.toString() || '',
         notes: investment.notes || ''
       };
       
-      console.log('🔄 New form data loaded:', newFormData);
-      setFormData(newFormData);
+      // Investment type'a göre özel alanları yükle
+      if (typeConfig && typeConfig.fields) {
+        typeConfig.fields.forEach(field => {
+          const fieldKey = field.key;
+          
+          // Investment objesinden değeri al
+          if (investment.hasOwnProperty(fieldKey)) {
+            if (field.type === 'number') {
+              initialData[fieldKey] = investment[fieldKey]?.toString() || '';
+            } else {
+              initialData[fieldKey] = investment[fieldKey] || '';
+            }
+            console.log(`🔄 USEEFFECT - Loaded field ${fieldKey}:`, investment[fieldKey]);
+          } else {
+            // Özel durumlar için mapping
+            switch (fieldKey) {
+              case 'stockPicker':
+                if (investment.symbol) {
+                  initialData[fieldKey] = investment.symbol;
+                  console.log(`🔄 USEEFFECT - Loaded stockPicker from symbol:`, investment.symbol);
+                }
+                break;
+              case 'fundPicker':
+                if (investment.fundCode) {
+                  initialData[fieldKey] = investment.fundCode;
+                  console.log(`🔄 USEEFFECT - Loaded fundPicker from fundCode:`, investment.fundCode);
+                }
+                break;
+              case 'cryptoPicker':
+                if (investment.cryptoSymbol) {
+                  initialData[fieldKey] = investment.cryptoSymbol;
+                  console.log(`🔄 USEEFFECT - Loaded cryptoPicker from cryptoSymbol:`, investment.cryptoSymbol);
+                }
+                break;
+              case 'goldPicker':
+                if (investment.goldType) {
+                  initialData[fieldKey] = investment.goldType;
+                  console.log(`🔄 USEEFFECT - Loaded goldPicker from goldType:`, investment.goldType);
+                }
+                break;
+              case 'amount':
+                // Yatırım fonu için units kullan, diğerleri için amount
+                if (investment.type === 'fund' && investment.units) {
+                  initialData['units'] = investment.units?.toString() || '';
+                  console.log(`🔄 USEEFFECT - Loaded units for fund:`, investment.units);
+                } else if (investment.amount) {
+                  initialData[fieldKey] = investment.amount?.toString() || '';
+                  console.log(`🔄 USEEFFECT - Loaded amount:`, investment.amount);
+                }
+                break;
+              case 'currentValue':
+                if (investment.currentValue) {
+                  initialData[fieldKey] = investment.currentValue?.toString() || '';
+                  console.log(`🔄 USEEFFECT - Loaded currentValue:`, investment.currentValue);
+                }
+                break;
+              default:
+                console.log(`🔄 USEEFFECT - Field ${fieldKey} not found in investment object`);
+                break;
+            }
+          }
+        });
+      }
+      
+      console.log('✅ USEEFFECT - COMPLETE Form data reloaded:', initialData);
+      setFormData(initialData);
+      setInvestmentType(investment.type);
     }
   }, [investment]);
 

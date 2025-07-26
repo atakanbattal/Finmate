@@ -198,24 +198,27 @@ export const calculateNetCashFlow = (transactions, filters = {}) => {
 
 // Helper function to calculate dynamic current value for an investment
 const calculateDynamicCurrentValue = (investment, investmentTypes) => {
-  let dynamicCurrentValue = investment.currentValue || investment.amount;
+  let dynamicCurrentValue = parseFloat(investment.currentValue) || parseFloat(investment.amount) || 0;
   
-  // Dinamik hesaplama yap
-  if (investment.type && investment.data && investmentTypes && investmentTypes[investment.type]) {
+  // Dinamik hesaplama yap - DÜZELTİLDİ: investment.data yerine direkt investment kullan
+  if (investment.type && investmentTypes && investmentTypes[investment.type]) {
     try {
       const dynamicCalc = investmentTypes[investment.type].calculate(
-        investment.data, 
-        investment.purchaseDate, 
-        investment.amount
+        investment, // formData as first parameter
+        investment  // investment object as second parameter for DCA support
       );
-      dynamicCurrentValue = dynamicCalc.currentValue || investment.amount;
+      if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
+        dynamicCurrentValue = dynamicCalc.currentValue;
+      }
     } catch (error) {
       console.error(`Error calculating ${investment.type}:`, error);
-      dynamicCurrentValue = investment.currentValue || investment.amount;
+      // Fallback to manual currentValue or amount
+      dynamicCurrentValue = parseFloat(investment.currentValue) || parseFloat(investment.amount) || 0;
     }
   }
   
-  return dynamicCurrentValue;
+  // Ensure we return a valid number
+  return isNaN(dynamicCurrentValue) ? 0 : dynamicCurrentValue;
 };
 
 // Calculate investment portfolio value (basic version - for backward compatibility)

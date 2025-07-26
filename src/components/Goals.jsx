@@ -37,33 +37,53 @@ const Goals = () => {
   const GoalModal = ({ goal, onClose }) => {
     const [useCashAndInvestments, setUseCashAndInvestments] = useState(false);
     
-    // Calculate available cash for new goals
+    // Calculate available cash for new goals - GÜVENLİ HESAPLAMA (CashManagement ile aynı mantık)
     const calculateAvailableCash = () => {
       console.log('Calculating available cash...');
       console.log('Total transactions:', state.transactions.length);
       
       const totalIncome = state.transactions
         .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
       
       const totalExpenses = state.transactions
         .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+      
+      // Yatırım maliyetini hesapla
+      const totalInvestmentCost = state.investments.reduce((sum, inv) => {
+        const amount = parseFloat(inv.amount) || 0;
+        return sum + amount;
+      }, 0);
       
       console.log('Total income:', totalIncome);
       console.log('Total expenses:', totalExpenses);
+      console.log('Total investment cost:', totalInvestmentCost);
       
-      const netCash = Math.max(0, totalIncome - totalExpenses);
-      console.log('Available cash:', netCash);
+      // Mevcut nakit = gelir - gider - yatırım maliyeti
+      const availableCash = Math.max(0, totalIncome - totalExpenses - totalInvestmentCost);
+      console.log('Available cash:', availableCash);
       
-      return netCash;
+      return isNaN(availableCash) ? 0 : availableCash;
     };
 
-    // Calculate total investment value
+    // Calculate total investment value - GÜVENLİ HESAPLAMA (DCA-aware)
     const calculateTotalInvestments = () => {
-      return state.investments.reduce((total, investment) => {
-        return total + (investment.currentValue || investment.amount || 0);
-      }, 0);
+      // CashManagement ile aynı hesaplama yöntemini kullan
+      const { calculatePortfolioValueDynamic } = require('../utils/calculations');
+      const { investmentTypes } = require('./DynamicInvestmentForm');
+      
+      try {
+        const dynamicValue = calculatePortfolioValueDynamic(state.investments, investmentTypes);
+        return isNaN(dynamicValue) ? 0 : dynamicValue;
+      } catch (error) {
+        console.error('Error calculating portfolio value:', error);
+        // Fallback to basic calculation
+        return state.investments.reduce((total, investment) => {
+          const value = parseFloat(investment.currentValue) || parseFloat(investment.amount) || 0;
+          return total + value;
+        }, 0);
+      }
     };
 
     const availableCash = calculateAvailableCash();

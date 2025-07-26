@@ -49,14 +49,14 @@ const CashManagement = () => {
 
     const filteredTransactions = getFilteredTransactions();
     
-    // Calculate totals
+    // Calculate totals - GÜVENLİ HESAPLAMA
     const totalIncome = filteredTransactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
     const totalExpenses = filteredTransactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
     const netCashFlow = totalIncome - totalExpenses;
     
@@ -64,34 +64,35 @@ const CashManagement = () => {
     const totalInvestmentValue = calculatePortfolioValueDynamic(state.investments, investmentTypes);
     
     const totalInvestmentCost = state.investments.reduce((sum, inv) => {
-      return sum + inv.amount;
+      const amount = parseFloat(inv.amount) || 0;
+      return sum + amount;
     }, 0);
     
     const investmentGainLoss = totalInvestmentValue - totalInvestmentCost;
     
-    // Calculate available cash from ALL transactions (not just current period)
+    // Calculate available cash from ALL transactions (not just current period) - GÜVENLİ HESAPLAMA
     const allTimeIncome = state.transactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
     const allTimeExpenses = state.transactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
     const availableCash = Math.max(0, allTimeIncome - allTimeExpenses - totalInvestmentCost);
     
     // Total wealth = available cash + current investment value
     const totalWealth = availableCash + totalInvestmentValue;
     
-    // Calculate regular income/expenses for projection
+    // Calculate regular income/expenses for projection - GÜVENLİ HESAPLAMA
     // Check for recurring transactions (either isRecurring=true or has recurring properties)
     const regularIncome = filteredTransactions
       .filter(t => t.type === 'income' && (t.isRecurring || t.recurring?.frequency))
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
     const regularExpenses = filteredTransactions
       .filter(t => t.type === 'expense' && (t.isRecurring || t.recurring?.frequency))
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
     const monthlyNetRegular = regularIncome - regularExpenses;
 

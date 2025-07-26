@@ -364,17 +364,27 @@ const Investments = () => {
                     
                     {/* Debug: Güncel değer durumu */}
                     {(() => {
-                      // Manuel güncel değer girilmiş mi kontrol et
+                      // Manuel güncel değer girilmiş mi kontrol et (string değerleri de kontrol et)
                       const hasManualCurrentValue = 
-                        (investment.type === 'stock' && investment.data?.currentPricePerLot > 0) ||
-                        (investment.type === 'fund' && investment.data?.currentPrice > 0) ||
-                        (investment.type === 'crypto' && investment.data?.currentPrice > 0) ||
-                        (investment.type === 'gold' && investment.data?.currentPrice > 0) ||
+                        (investment.type === 'stock' && (parseFloat(investment.data?.currentPricePerLot) > 0 || parseFloat(investment.data?.currentPrice) > 0)) ||
+                        (investment.type === 'fund' && parseFloat(investment.data?.currentPrice) > 0) ||
+                        (investment.type === 'crypto' && parseFloat(investment.data?.currentPrice) > 0) ||
+                        (investment.type === 'gold' && parseFloat(investment.data?.currentPrice) > 0) ||
                         (investment.type === 'deposit') || // Mevduat için hesaplanır
-                        (investment.type === 'other' && investment.data?.currentValue > 0);
+                        (investment.type === 'other' && parseFloat(investment.data?.currentValue) > 0);
                       
                       // Eğer manuel değer girilmemişse ve güncel değer yatırılan tutara eşitse uyarı göster
                       const shouldShowWarning = !hasManualCurrentValue && Math.abs(currentValue - totalInvested) < 0.01;
+                      
+                      // Debug log ekle
+                      console.log('Investment debug:', {
+                        type: investment.type,
+                        hasManualCurrentValue,
+                        currentValue,
+                        totalInvested,
+                        shouldShowWarning,
+                        data: investment.data
+                      });
                       
                       return shouldShowWarning ? (
                         <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">

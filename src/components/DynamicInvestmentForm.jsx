@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Calculator, Info, TrendingUp } from 'lucide-react';
 import AssetPicker from './AssetPicker';
 
@@ -448,6 +448,11 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState(() => {
     if (investment) {
       // Mevcut yatırımı düzenleme modu - Tüm alanları yükle
+      console.log('🔍 Loading investment for editing:', investment);
+      console.log('🔍 Investment type:', investment.type);
+      console.log('🔍 Investment data:', investment.data);
+      console.log('🔍 Investment details:', investment.details);
+      
       const initialData = {
         name: investment.name || '',
         amount: investment.amount?.toString() || '',
@@ -455,47 +460,100 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
         ...investment.data || {},
         // Details'den de tüm alanları yükle
         ...investment.details || {},
-        // Yatırım türüne özel alanları kontrol et
+        // Yatırım türüne özel alanları kontrol et ve güvenli yükle
         ...(investment.type === 'stock' && {
           stockPicker: investment.data?.stockPicker || investment.details?.stockPicker || null,
-          lotCount: investment.data?.lotCount?.toString() || investment.details?.lotCount?.toString() || '',
-          pricePerLot: investment.data?.pricePerLot?.toString() || investment.details?.pricePerLot?.toString() || '',
-          currentPricePerLot: investment.data?.currentPricePerLot?.toString() || investment.details?.currentPricePerLot?.toString() || investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
+          lotCount: (investment.data?.lotCount || investment.details?.lotCount || '').toString(),
+          pricePerLot: (investment.data?.pricePerLot || investment.details?.pricePerLot || '').toString(),
+          currentPricePerLot: (investment.data?.currentPricePerLot || investment.details?.currentPricePerLot || investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
         }),
         ...(investment.type === 'crypto' && {
           cryptoPicker: investment.data?.cryptoPicker || investment.details?.cryptoPicker || null,
-          amount: investment.data?.amount?.toString() || investment.details?.amount?.toString() || investment.amount?.toString() || '',
-          purchasePrice: investment.data?.purchasePrice?.toString() || investment.details?.purchasePrice?.toString() || '',
-          currentPrice: investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
+          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
+          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
         }),
         ...(investment.type === 'gold' && {
           goldPicker: investment.data?.goldPicker || investment.details?.goldPicker || null,
-          weight: investment.data?.weight?.toString() || investment.details?.weight?.toString() || '',
-          purchasePrice: investment.data?.purchasePrice?.toString() || investment.details?.purchasePrice?.toString() || '',
-          currentPrice: investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
+          weight: (investment.data?.weight || investment.details?.weight || '').toString(),
+          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
+          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
         }),
         ...(investment.type === 'fund' && {
           fundPicker: investment.data?.fundPicker || investment.details?.fundPicker || null,
-          amount: investment.data?.amount?.toString() || investment.details?.amount?.toString() || investment.amount?.toString() || '',
-          purchasePrice: investment.data?.purchasePrice?.toString() || investment.details?.purchasePrice?.toString() || '',
-          currentPrice: investment.data?.currentPrice?.toString() || investment.details?.currentPrice?.toString() || ''
+          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
+          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
         }),
         ...(investment.type === 'deposit' && {
           name: investment.data?.name || investment.details?.name || investment.name || '',
-          amount: investment.data?.amount?.toString() || investment.details?.amount?.toString() || investment.amount?.toString() || '',
-          interestRate: investment.data?.interestRate?.toString() || investment.details?.interestRate?.toString() || '',
+          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          interestRate: (investment.data?.interestRate || investment.details?.interestRate || '').toString(),
           startDate: investment.data?.startDate || investment.details?.startDate || '',
-          termMonths: investment.data?.termMonths?.toString() || investment.details?.termMonths?.toString() || '',
+          termMonths: (investment.data?.termMonths || investment.details?.termMonths || '').toString(),
           interestType: investment.data?.interestType || investment.details?.interestType || 'simple'
         })
       };
       
-      console.log('Loading investment for editing:', investment);
-      console.log('Form data initialized:', initialData);
+      console.log('✅ Form data initialized:', initialData);
       return initialData;
     }
+    console.log('⚠️ No investment provided, returning empty form data');
     return {};
   });
+
+  // Investment prop'u değiştiğinde form'u yeniden yükle
+  useEffect(() => {
+    if (investment) {
+      console.log('🔄 Investment prop changed, reloading form data:', investment);
+      setInvestmentType(investment.type || '');
+      
+      const newFormData = {
+        name: investment.name || '',
+        amount: investment.amount?.toString() || '',
+        // Investment data'dan tüm alanları yükle
+        ...investment.data || {},
+        // Details'den de tüm alanları yükle
+        ...investment.details || {},
+        // Yatırım türüne özel alanları kontrol et ve güvenli yükle
+        ...(investment.type === 'stock' && {
+          stockPicker: investment.data?.stockPicker || investment.details?.stockPicker || null,
+          lotCount: (investment.data?.lotCount || investment.details?.lotCount || '').toString(),
+          pricePerLot: (investment.data?.pricePerLot || investment.details?.pricePerLot || '').toString(),
+          currentPricePerLot: (investment.data?.currentPricePerLot || investment.details?.currentPricePerLot || investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
+        }),
+        ...(investment.type === 'crypto' && {
+          cryptoPicker: investment.data?.cryptoPicker || investment.details?.cryptoPicker || null,
+          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
+          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
+        }),
+        ...(investment.type === 'gold' && {
+          goldPicker: investment.data?.goldPicker || investment.details?.goldPicker || null,
+          weight: (investment.data?.weight || investment.details?.weight || '').toString(),
+          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
+          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
+        }),
+        ...(investment.type === 'fund' && {
+          fundPicker: investment.data?.fundPicker || investment.details?.fundPicker || null,
+          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
+          currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
+        }),
+        ...(investment.type === 'deposit' && {
+          name: investment.data?.name || investment.details?.name || investment.name || '',
+          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          interestRate: (investment.data?.interestRate || investment.details?.interestRate || '').toString(),
+          startDate: investment.data?.startDate || investment.details?.startDate || '',
+          termMonths: (investment.data?.termMonths || investment.details?.termMonths || '').toString(),
+          interestType: investment.data?.interestType || investment.details?.interestType || 'simple'
+        })
+      };
+      
+      console.log('🔄 New form data loaded:', newFormData);
+      setFormData(newFormData);
+    }
+  }, [investment]);
 
   // Calculate investment preview
   const calculations = useMemo(() => {

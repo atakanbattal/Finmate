@@ -78,20 +78,35 @@ export const createInvestment = (data = {}) => ({
   updatedAt: new Date().toISOString()
 });
 
+// Generate a simple UUID (compatible with all browsers)
+const generateUUID = () => {
+  return 'goal-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+};
+
 // Default data structure for a financial goal
-export const createGoal = (data = {}) => ({
-  id: data.id || crypto.randomUUID(),
-  title: data.title || '',
-  description: data.description || '',
-  targetAmount: data.targetAmount || 0,
-  currentAmount: data.currentAmount || 0,
-  targetDate: data.targetDate || '',
-  category: data.category || 'SAVINGS',
-  userId: data.userId || 'default',
-  isCompleted: data.isCompleted || false,
-  createdAt: data.createdAt || new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-});
+export const createGoal = (data = {}) => {
+  try {
+    const goal = {
+      id: data.id || generateUUID(),
+      title: data.title || '',
+      description: data.description || '',
+      targetAmount: data.targetAmount || 0,
+      currentAmount: data.currentAmount || 0,
+      targetDate: data.targetDate || '',
+      category: data.category || 'SAVINGS',
+      userId: data.userId || 'default',
+      isCompleted: data.isCompleted || false,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    console.log('createGoal: Created goal object:', goal);
+    return goal;
+  } catch (error) {
+    console.error('createGoal: Error creating goal:', error);
+    throw new Error('Goal creation failed: ' + error.message);
+  }
+};
 
 // Default data structure for a user/family member
 export const createUser = (data = {}) => ({

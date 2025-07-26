@@ -88,10 +88,14 @@ const Goals = () => {
     }, [availableAmount, goal]);
 
     const handleSubmit = (e) => {
-      e.preventDefault();
+      console.log('=== GOAL SUBMIT START ===');
       
       try {
+        e.preventDefault();
+        console.log('Form data before validation:', formData);
+        
         if (!formData.title || !formData.targetAmount || !formData.targetDate) {
+          console.log('Validation failed - missing required fields');
           alert('Lütfen tüm zorunlu alanları doldurun');
           return;
         }
@@ -102,23 +106,60 @@ const Goals = () => {
           currentAmount: parseFloat(formData.currentAmount || 0)
         };
 
-        console.log('Submitting goal data:', goalData);
+        console.log('Goal data prepared:', goalData);
+        console.log('Actions object:', actions);
+        console.log('State object:', state);
 
         if (goal) {
-          console.log('Updating existing goal:', goal.id);
+          console.log('=== UPDATING EXISTING GOAL ===');
+          console.log('Existing goal:', goal);
+          console.log('Update data:', goalData);
+          
+          if (typeof actions.updateGoal !== 'function') {
+            throw new Error('actions.updateGoal is not a function');
+          }
+          
           actions.updateGoal({ ...goal, ...goalData });
+          console.log('Goal update action dispatched');
         } else {
-          console.log('Creating new goal');
+          console.log('=== CREATING NEW GOAL ===');
+          
+          if (typeof createGoal !== 'function') {
+            throw new Error('createGoal is not a function');
+          }
+          
           const newGoal = createGoal(goalData);
           console.log('New goal created:', newGoal);
+          
+          if (typeof actions.addGoal !== 'function') {
+            throw new Error('actions.addGoal is not a function');
+          }
+          
+          console.log('About to dispatch addGoal action');
           actions.addGoal(newGoal);
+          console.log('Goal add action dispatched successfully');
         }
         
-        console.log('Goal operation completed, closing modal');
+        console.log('=== GOAL OPERATION COMPLETED ===');
+        console.log('About to close modal');
+        
+        if (typeof onClose !== 'function') {
+          throw new Error('onClose is not a function');
+        }
+        
         onClose();
+        console.log('Modal closed successfully');
+        console.log('=== GOAL SUBMIT END ===');
+        
       } catch (error) {
-        console.error('Error submitting goal:', error);
-        alert('Hedef kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+        console.error('=== GOAL SUBMIT ERROR ===');
+        console.error('Error details:', error);
+        console.error('Error stack:', error.stack);
+        console.error('Form data at error:', formData);
+        console.error('Actions at error:', actions);
+        console.error('State at error:', state);
+        
+        alert('Hedef kaydedilirken bir hata oluştu: ' + error.message + '. Lütfen tekrar deneyin.');
         // Don't close the modal on error so user can retry
       }
     };

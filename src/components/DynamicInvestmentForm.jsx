@@ -481,7 +481,7 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
         }),
         ...(investment.type === 'fund' && {
           fundPicker: investment.data?.fundPicker || investment.details?.fundPicker || null,
-          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          units: (investment.data?.units || investment.details?.units || '').toString(),
           purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
           currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
         }),
@@ -536,7 +536,7 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
         }),
         ...(investment.type === 'fund' && {
           fundPicker: investment.data?.fundPicker || investment.details?.fundPicker || null,
-          amount: (investment.data?.amount || investment.details?.amount || investment.amount || '').toString(),
+          units: (investment.data?.units || investment.details?.units || '').toString(),
           purchasePrice: (investment.data?.purchasePrice || investment.details?.purchasePrice || '').toString(),
           currentPrice: (investment.data?.currentPrice || investment.details?.currentPrice || '').toString()
         }),

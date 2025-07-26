@@ -445,6 +445,40 @@ export const investmentTypes = {
 
 const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
   console.log('🔍 DYNAMICINVESTMENTFORM RENDER - Gelen investment prop:', investment);
+  
+  // 🚨 GERÇEK SORUN BULMA: Investment objesinin GERÇEK yapısını analiz et
+  if (investment) {
+    console.log('🔍 INVESTMENT OBJECT ANALYSIS:');
+    console.log('🔍 Object.keys(investment):', Object.keys(investment));
+    console.log('🔍 Object.entries(investment):', Object.entries(investment));
+    console.log('🔍 investment.id:', investment.id);
+    console.log('🔍 investment.name:', investment.name);
+    console.log('🔍 investment.type:', investment.type);
+    console.log('🔍 investment.amount:', investment.amount);
+    console.log('🔍 investment.currentValue:', investment.currentValue);
+    console.log('🔍 investment.notes:', investment.notes);
+    console.log('🔍 investment.purchaseDate:', investment.purchaseDate);
+    
+    // Yatırım türüne göre özel alanları kontrol et
+    if (investment.type === 'fund') {
+      console.log('🔍 FUND SPECIFIC FIELDS:');
+      console.log('🔍 investment.units:', investment.units);
+      console.log('🔍 investment.purchasePrice:', investment.purchasePrice);
+      console.log('🔍 investment.currentPrice:', investment.currentPrice);
+      console.log('🔍 investment.fundCode:', investment.fundCode);
+      console.log('🔍 investment.fundName:', investment.fundName);
+    }
+    
+    if (investment.type === 'stock') {
+      console.log('🔍 STOCK SPECIFIC FIELDS:');
+      console.log('🔍 investment.lots:', investment.lots);
+      console.log('🔍 investment.currentPricePerLot:', investment.currentPricePerLot);
+      console.log('🔍 investment.symbol:', investment.symbol);
+      console.log('🔍 investment.stockName:', investment.stockName);
+    }
+    
+    console.log('🔍 FULL INVESTMENT OBJECT STRUCTURE:', JSON.stringify(investment, null, 2));
+  }
   const [investmentType, setInvestmentType] = useState(investment?.type || '');
   const [formData, setFormData] = useState(() => {
     if (investment) {

@@ -416,11 +416,33 @@ export const calculateDCAMetrics = (transactions, currentPricePerUnit = 0) => {
  * @returns {Object} Updated investment with DCA metrics
  */
 export const addTransactionToInvestment = (investment, newTransaction, currentPricePerUnit = 0) => {
-  // ÖNCE: Yatırımı DCA formatına migrate et (ilk işlemi oluştur)
-  const migratedInvestment = migrateInvestmentToDCA(investment);
+  // Ensure transactions array exists
+  let existingTransactions = investment.transactions || [];
   
-  // Ensure transactions array exists (artık migrate edilmiş)
-  const existingTransactions = migratedInvestment.transactions || [];
+  // KRITIK DÜZELTME: Eğer henüz transaction yoksa, mevcut yatırım verilerini ilk transaction olarak ekle
+  if (existingTransactions.length === 0 && investment.amount && parseFloat(investment.amount) > 0) {
+    console.log('🔧 İLK TRANSACTION OLUŞTURULUYOR - Mevcut yatırım verileri korunuyor');
+    console.log('🔧 Investment amount:', investment.amount);
+    console.log('🔧 Investment currentValue:', investment.currentValue);
+    
+    // Mevcut yatırım verilerinden ilk transaction'ı oluştur
+    const quantity = parseFloat(investment.quantity || investment.units || investment.lots || 1);
+    const totalAmount = parseFloat(investment.amount);
+    const pricePerUnit = quantity > 0 ? totalAmount / quantity : totalAmount;
+    
+    const initialTransaction = {
+      id: `tx-initial-${investment.id}`,
+      date: investment.purchaseDate || new Date().toISOString().split('T')[0],
+      quantity: quantity,
+      pricePerUnit: pricePerUnit,
+      totalAmount: totalAmount,
+      notes: investment.notes || 'İlk yatırım (mevcut kayıt)',
+      createdAt: investment.createdAt || new Date().toISOString()
+    };
+    
+    existingTransactions = [initialTransaction];
+    console.log('🔧 İlk transaction oluşturuldu:', initialTransaction);
+  }
   
   // Create new transaction with ID and timestamp
   const transaction = {
@@ -436,21 +458,23 @@ export const addTransactionToInvestment = (investment, newTransaction, currentPr
   // Add new transaction
   const allTransactions = [...existingTransactions, transaction];
   
+  console.log('🔧 TÜM TRANSACTIONS:', allTransactions.length, 'adet');
+  console.log('🔧 İlk transaction:', allTransactions[0]);
+  console.log('🔧 Yeni transaction:', transaction);
+  
   // Calculate DCA metrics
   const dcaMetrics = calculateDCAMetrics(allTransactions, currentPricePerUnit);
   
   console.log('🔄 DCA TRANSACTION ADDED - Debug Info:');
   console.log('🔄 Original investment amount:', investment.amount);
   console.log('🔄 Original investment currentValue:', investment.currentValue);
-  console.log('🔄 Migrated investment transactions:', migratedInvestment.transactions?.length || 0);
-  console.log('🔄 Existing transactions before add:', existingTransactions.length);
   console.log('🔄 New transaction amount:', transaction.totalAmount);
   console.log('🔄 DCA calculated totalInvested:', dcaMetrics.totalInvested);
   console.log('🔄 DCA calculated currentTotalValue:', dcaMetrics.currentTotalValue);
   
   // Return updated investment
   const updatedInvestment = {
-    ...migratedInvestment,
+    ...investment,
     transactions: allTransactions,
     // Update DCA fields
     totalQuantity: dcaMetrics.totalQuantity,

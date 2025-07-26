@@ -284,12 +284,11 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
     setInvestmentType(investment.type);
   }, [investment]);
 
-  // Calculate investment preview
+  // Calculate investment preview - BASİT YAKLAŞIM
   const calculations = useMemo(() => {
     if (!investmentType || !investmentTypes[investmentType]) return null;
     
     const typeConfig = investmentTypes[investmentType];
-    // Market data'yı calculation'a geç (şimdilik null, gerçek entegrasyon sonra yapılacak)
     return typeConfig.calculate(formData, investment?.purchaseDate, null, null);
   }, [investmentType, formData, investment?.purchaseDate]);
 
@@ -456,8 +455,8 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
               </div>
             ))}
 
-            {/* Calculations Preview */}
-            {calculations && (
+            {/* Calculations Preview - DİREKT HESAPLAMA */}
+            {investmentType && investmentTypes[investmentType] && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center mb-3">
                   <Calculator className="h-5 w-5 text-blue-600 mr-2" />
@@ -468,27 +467,27 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
                   <div>
                     <span className="text-blue-700 font-medium">Yatırılan Tutar:</span>
                     <div className="text-blue-900 font-semibold">
-                      ₺{calculations.totalInvested.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₺{calculations?.totalInvested ? calculations.totalInvested.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                     </div>
                   </div>
                   <div>
                     <span className="text-blue-700 font-medium">Güncel Değer:</span>
                     <div className="text-blue-900 font-semibold">
-                      ₺{calculations.currentValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₺{calculations?.currentValue ? calculations.currentValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                     </div>
                   </div>
                   <div>
                     <span className="text-blue-700 font-medium">Kazanç/Kayıp:</span>
-                    <div className={`font-semibold ${calculations.currentValue >= calculations.totalInvested ? 'text-green-600' : 'text-red-600'}`}>
-                      {calculations.currentValue >= calculations.totalInvested ? '+' : ''}
-                      ₺{(calculations.currentValue - calculations.totalInvested).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <div className={`font-semibold ${(calculations?.gainLoss || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {(calculations?.gainLoss || 0) >= 0 ? '+' : ''}
+                      ₺{calculations?.gainLoss ? calculations.gainLoss.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                     </div>
                   </div>
                   <div>
                     <span className="text-blue-700 font-medium">Getiri Oranı:</span>
-                    <div className={`font-semibold ${calculations.returnPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {calculations.returnPercentage >= 0 ? '+' : ''}
-                      %{calculations.returnPercentage?.toFixed(2) || '0.00'}
+                    <div className={`font-semibold ${(calculations?.returnPercentage || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {(calculations?.returnPercentage || 0) >= 0 ? '+' : ''}
+                      %{calculations?.returnPercentage ? calculations.returnPercentage.toFixed(2) : '0.00'}
                     </div>
                   </div>
                 </div>

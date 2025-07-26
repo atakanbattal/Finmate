@@ -31,21 +31,31 @@ const Investments = () => {
     let currentValue = 0;
     let totalGains = 0;
     
+    console.log('🔄 RECALCULATING PORTFOLIO METRICS:', investments.length, 'investments');
+    
     investments.forEach(investment => {
       try {
         const investedAmount = parseFloat(investment.amount) || 0;
         let dynamicCurrentValue = investedAmount; // fallback to invested amount
         
-        // Try dynamic calculation first
-        if (investment.type && investment.data && investmentTypes && investmentTypes[investment.type]) {
+        console.log(`📊 Processing investment: ${investment.name}`, {
+          type: investment.type,
+          amount: investment.amount,
+          currentValue: investment.currentValue,
+          hasData: !!investment.data
+        });
+        
+        // Try dynamic calculation first - DÜZELTİLDİ: investment.data yerine direkt investment
+        if (investment.type && investmentTypes && investmentTypes[investment.type]) {
           try {
             const dynamicCalc = investmentTypes[investment.type].calculate(
-              investment.data, 
+              investment, // DÜZELTİLDİ: investment.data yerine direkt investment
               investment.purchaseDate, 
               investedAmount
             );
             if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
               dynamicCurrentValue = dynamicCalc.currentValue;
+              console.log(`✅ Dynamic calculation successful for ${investment.name}:`, dynamicCalc.currentValue);
               // Use totalInvested from calculation if available (more accurate)
               if (dynamicCalc.totalInvested && !isNaN(dynamicCalc.totalInvested)) {
                 totalInvested += dynamicCalc.totalInvested;
@@ -53,22 +63,26 @@ const Investments = () => {
                 totalInvested += investedAmount;
               }
             } else {
+              console.log(`⚠️ Dynamic calculation returned invalid result for ${investment.name}`);
               totalInvested += investedAmount;
             }
           } catch (calcError) {
-            console.warn(`Dynamic calculation failed for ${investment.type}:`, calcError);
+            console.warn(`❌ Dynamic calculation failed for ${investment.type}:`, calcError);
             // Use manual currentValue if available
             if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
               dynamicCurrentValue = parseFloat(investment.currentValue);
+              console.log(`📝 Using manual currentValue for ${investment.name}:`, dynamicCurrentValue);
             }
             totalInvested += investedAmount;
           }
         } else if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
           // Use manual currentValue if no dynamic calculation available
           dynamicCurrentValue = parseFloat(investment.currentValue);
+          console.log(`📝 Using manual currentValue (no calc) for ${investment.name}:`, dynamicCurrentValue);
           totalInvested += investedAmount;
         } else {
           // No current value available, use invested amount
+          console.log(`⚠️ No current value for ${investment.name}, using invested amount`);
           totalInvested += investedAmount;
         }
         
@@ -86,13 +100,20 @@ const Investments = () => {
     totalGains = currentValue - totalInvested;
     const gainPercentage = totalInvested > 0 ? (totalGains / totalInvested) * 100 : 0;
     
+    console.log('💰 FINAL PORTFOLIO METRICS:', {
+      totalInvested,
+      currentValue,
+      totalGains,
+      gainPercentage
+    });
+    
     return {
       totalInvested,
       currentValue,
       totalGains,
       gainPercentage
     };
-  }, [investments, investmentTypes]);
+  }, [investments, investmentTypes]); // DÜZELTİLDİ: investmentTypes dependency eklendi
   
   const { totalInvested, currentValue, totalGains, gainPercentage } = portfolioMetrics;
 
@@ -269,31 +290,36 @@ const Investments = () => {
             let gain = 0;
             
             try {
-              // Yatırım türüne göre dinamik hesaplama
-              if (investment.type && investment.data && investmentTypes && investmentTypes[investment.type]) {
+              // Yatırım türüne göre dinamik hesaplama - DÜZELTİLDİ: investment.data yerine direkt investment
+              if (investment.type && investmentTypes && investmentTypes[investment.type]) {
                 try {
                   const dynamicCalc = investmentTypes[investment.type].calculate(
-                    investment.data, 
+                    investment, // DÜZELTİLDİ: investment.data yerine direkt investment
                     investment.purchaseDate, 
                     investedAmount
                   );
                   if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
                     currentValue = dynamicCalc.currentValue;
+                    console.log(`🔄 Individual card - Dynamic calculation for ${investment.name}:`, dynamicCalc.currentValue);
                     // Use more accurate totalInvested from calculation if available
                     if (dynamicCalc.totalInvested && !isNaN(dynamicCalc.totalInvested)) {
                       totalInvested = dynamicCalc.totalInvested;
                     }
+                  } else {
+                    console.log(`⚠️ Individual card - Dynamic calculation returned invalid result for ${investment.name}`);
                   }
                 } catch (calcError) {
-                  console.warn(`Dynamic calculation failed for ${investment.type}:`, calcError);
+                  console.warn(`❌ Individual card - Dynamic calculation failed for ${investment.type}:`, calcError);
                   // Use manual currentValue if available
                   if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
                     currentValue = parseFloat(investment.currentValue);
+                    console.log(`📝 Individual card - Using manual currentValue for ${investment.name}:`, currentValue);
                   }
                 }
               } else if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
                 // Use manual currentValue if no dynamic calculation available
                 currentValue = parseFloat(investment.currentValue);
+                console.log(`📝 Individual card - Using manual currentValue (no calc) for ${investment.name}:`, currentValue);
               }
               
               gain = currentValue - totalInvested;
@@ -425,10 +451,10 @@ const Investments = () => {
                 {/* Additional Info & Actions */}
                 <div className="mt-4 flex items-center justify-between">
                   <div className="flex items-center space-x-6 text-sm text-gray-500">
-                    {investment.type && investment.data && investmentTypes[investment.type] && (() => {
+                    {investment.type && investmentTypes[investment.type] && (() => {
                       try {
                         const calc = investmentTypes[investment.type].calculate(
-                          investment.data, 
+                          investment, // DÜZELTİLDİ: investment.data yerine direkt investment
                           investment.purchaseDate, 
                           investment.amount
                         );
@@ -512,10 +538,11 @@ const Investments = () => {
                 let dynamicCurrentValue = investedAmount; // fallback
                 
                 try {
-                  if (inv.type && inv.data && investmentTypes && investmentTypes[inv.type]) {
+                  // DÜZELTİLDİ: inv.data yerine direkt inv
+                  if (inv.type && investmentTypes && investmentTypes[inv.type]) {
                     try {
                       const dynamicCalc = investmentTypes[inv.type].calculate(
-                        inv.data, 
+                        inv, // DÜZELTİLDİ: inv.data yerine direkt inv
                         inv.purchaseDate, 
                         investedAmount
                       );

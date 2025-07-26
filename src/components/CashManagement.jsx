@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import SavingsSettings from './SavingsSettings';
 import { investmentTypes } from './DynamicInvestmentForm';
-import { calculatePortfolioValueDynamic, getTransactionsWithRecurring } from '../utils/calculations';
+import { calculatePortfolioValueDynamic, getTransactionsWithRecurring, formatCurrency } from '../utils/calculations';
 import {
   Wallet,
   TrendingUp,
@@ -144,7 +144,7 @@ const CashManagement = () => {
           <div>
             <p className="text-sm font-medium opacity-75">{title}</p>
             <p className="text-2xl font-bold mt-1">
-              ₺{value.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+              {formatCurrency(value)}
             </p>
             {trend && (
               <div className="flex items-center mt-2 text-sm">
@@ -153,7 +153,7 @@ const CashManagement = () => {
                 ) : (
                   <ArrowDownRight className="h-4 w-4 mr-1" />
                 )}
-                <span>₺{Math.abs(trendValue).toLocaleString('tr-TR')}</span>
+                <span>{formatCurrency(Math.abs(trendValue))}</span>
               </div>
             )}
           </div>
@@ -253,7 +253,7 @@ const CashManagement = () => {
               <span className="text-gray-700">Mevcut Nakit</span>
             </div>
             <div className="text-right">
-              <div className="font-semibold">₺{cashData.availableCash.toLocaleString('tr-TR')}</div>
+              <div className="font-semibold">{formatCurrency(cashData.availableCash)}</div>
               <div className="text-sm text-gray-500">
                 %{((cashData.availableCash / cashData.totalWealth) * 100).toFixed(1)}
               </div>
@@ -266,7 +266,7 @@ const CashManagement = () => {
               <span className="text-gray-700">Yatırımlar</span>
             </div>
             <div className="text-right">
-              <div className="font-semibold">₺{cashData.totalInvestmentValue.toLocaleString('tr-TR')}</div>
+              <div className="font-semibold">{formatCurrency(cashData.totalInvestmentValue)}</div>
               <div className="text-sm text-gray-500">
                 %{((cashData.totalInvestmentValue / cashData.totalWealth) * 100).toFixed(1)}
               </div>
@@ -296,20 +296,20 @@ const CashManagement = () => {
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Toplam Gelir</span>
               <span className="font-semibold text-green-600">
-                +₺{cashData.totalIncome.toLocaleString('tr-TR')}
+                +{formatCurrency(cashData.totalIncome)}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Toplam Gider</span>
               <span className="font-semibold text-red-600">
-                -₺{cashData.totalExpenses.toLocaleString('tr-TR')}
+                -{formatCurrency(cashData.totalExpenses)}
               </span>
             </div>
             <hr />
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-900">Net Akış</span>
               <span className={`font-bold text-lg ${cashData.netCashFlow > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {cashData.netCashFlow > 0 ? '+' : ''}₺{cashData.netCashFlow.toLocaleString('tr-TR')}
+                {cashData.netCashFlow > 0 ? '+' : ''}{formatCurrency(cashData.netCashFlow)}
               </span>
             </div>
           </div>
@@ -326,20 +326,20 @@ const CashManagement = () => {
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Düzenli Gelir</span>
               <span className="font-semibold text-green-600">
-                +₺{cashData.regularIncome.toLocaleString('tr-TR')}/ay
+                +{formatCurrency(cashData.regularIncome)}/ay
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Düzenli Gider</span>
               <span className="font-semibold text-red-600">
-                -₺{cashData.regularExpenses.toLocaleString('tr-TR')}/ay
+                -{formatCurrency(cashData.regularExpenses)}/ay
               </span>
             </div>
             <hr />
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-900">Aylık Net</span>
               <span className={`font-bold ${cashData.monthlyNetRegular > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {cashData.monthlyNetRegular > 0 ? '+' : ''}₺{cashData.monthlyNetRegular.toLocaleString('tr-TR')}/ay
+                {cashData.monthlyNetRegular > 0 ? '+' : ''}{formatCurrency(cashData.monthlyNetRegular)}/ay
               </span>
             </div>
             
@@ -379,7 +379,7 @@ const CashManagement = () => {
           
           <div className="mb-4 p-3 bg-green-50 rounded-lg">
             <p className="text-green-700 font-medium">
-              Mevcut Nakit: ₺{cashData.availableCash.toLocaleString('tr-TR')}
+              Mevcut Nakit: {formatCurrency(cashData.availableCash)}
             </p>
             <p className="text-sm text-green-600 mt-1">
               Bu miktar hedeflerinize otomatik olarak dağıtılabilir
@@ -407,14 +407,14 @@ const CashManagement = () => {
                       ></div>
                     </div>
                     <div className="flex justify-between text-sm text-gray-600 mt-1">
-                      <span>₺{goal.currentAmount.toLocaleString('tr-TR')}</span>
-                      <span>₺{goal.targetAmount.toLocaleString('tr-TR')}</span>
+                      <span>{formatCurrency(goal.currentAmount)}</span>
+                      <span>{formatCurrency(goal.targetAmount)}</span>
                     </div>
                   </div>
                   <div className="ml-4 text-right">
                     <div className="text-sm text-gray-500">Kalan</div>
                     <div className="font-semibold text-gray-900">
-                      ₺{remaining.toLocaleString('tr-TR')}
+                      {formatCurrency(remaining)}
                     </div>
                   </div>
                 </div>

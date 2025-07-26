@@ -106,7 +106,7 @@ const Goals = () => {
         const goalData = {
           ...formData,
           targetAmount: parseFloat(formData.targetAmount) || 0,
-          currentAmount: parseFloat(formData.currentAmount || 0)
+          currentAmount: parseFloat(formData.currentAmount) || 0
         };
 
         console.log('Goal data prepared:', goalData);

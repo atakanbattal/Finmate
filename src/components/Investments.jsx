@@ -12,6 +12,8 @@ import {
   Info
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import InvestmentModal from './InvestmentModal';
+import InvestmentDetailModal from './InvestmentDetailModal';
 import { createInvestment } from '../types';
 import { formatCurrency, calculatePortfolioValueDynamic, calculateInvestmentGainsDynamic } from '../utils/calculations';
 import DynamicInvestmentForm, { investmentTypes } from './DynamicInvestmentForm';
@@ -22,6 +24,7 @@ const Investments = () => {
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingInvestment, setEditingInvestment] = useState(null);
+  const [viewingInvestment, setViewingInvestment] = useState(null);
 
   // Calculate portfolio metrics with improved error handling
   const portfolioMetrics = useMemo(() => {
@@ -320,7 +323,11 @@ const Investments = () => {
             const displayName = investment.name || `${getInvestmentTypeName(investment.type)} - ${formatCurrency(investment.amount)}`;
             
             return (
-              <div key={investment.id} className="p-6 hover:bg-slate-50/50 transition-colors duration-200 border-b border-gray-100 last:border-b-0">
+              <div 
+                key={investment.id} 
+                className="p-6 hover:bg-slate-50/50 transition-colors duration-200 border-b border-gray-100 last:border-b-0 cursor-pointer"
+                onClick={() => setViewingInvestment(investment)}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     {/* Investment Name & Type */}
@@ -428,14 +435,20 @@ const Investments = () => {
                   
                   <div className="flex space-x-1">
                     <button
-                      onClick={() => setEditingInvestment(investment)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingInvestment(investment);
+                      }}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Düzenle"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => actions.deleteInvestment(investment.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        actions.deleteInvestment(investment.id);
+                      }}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Sil"
                     >
@@ -551,6 +564,17 @@ const Investments = () => {
         <InvestmentModal
           investment={editingInvestment}
           onClose={() => setEditingInvestment(null)}
+        />
+      )}
+      
+      {viewingInvestment && (
+        <InvestmentDetailModal
+          investment={viewingInvestment}
+          onClose={() => setViewingInvestment(null)}
+          onEdit={() => {
+            setEditingInvestment(viewingInvestment);
+            setViewingInvestment(null);
+          }}
         />
       )}
     </div>

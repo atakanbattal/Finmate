@@ -59,12 +59,26 @@ export const investmentTypes = {
       
       const totalInvested = lots * purchasePrice;
       const currentValue = lots * currentPrice;
+      const gainLoss = currentValue - totalInvested;
+      const returnPercentage = totalInvested > 0 ? (gainLoss / totalInvested) * 100 : 0;
+      
+      // DEBUG: Gerçek zamanlı hesaplama kontrolü
+      console.log('🔥 STOCK CALCULATE DEBUG:');
+      console.log('🔥 lots:', lots);
+      console.log('🔥 purchasePrice:', purchasePrice);
+      console.log('🔥 currentPrice:', currentPrice);
+      console.log('🔥 totalInvested:', totalInvested);
+      console.log('🔥 currentValue:', currentValue);
+      console.log('🔥 gainLoss:', gainLoss);
+      console.log('🔥 returnPercentage:', returnPercentage);
       
       return {
         totalInvested,
         currentValue,
+        gainLoss,
+        returnPercentage,
         units: `${lots} lot`,
-        extraInfo: currentPrice === purchasePrice ? 'Güncel fiyat girilmemiş (kazanç 0)' : null
+        extraInfo: currentPrice === purchasePrice ? 'Güncel fiyat girilmemiş (kazanç 0)' : `Getiri: %${returnPercentage.toFixed(2)}`
       };
     }
   },
@@ -128,12 +142,26 @@ export const investmentTypes = {
       
       const totalInvested = units * purchasePrice;
       const currentValue = units * currentPrice;
+      const gainLoss = currentValue - totalInvested;
+      const returnPercentage = totalInvested > 0 ? (gainLoss / totalInvested) * 100 : 0;
+      
+      // DEBUG: Gerçek zamanlı hesaplama kontrolü
+      console.log('🔥 FUND CALCULATE DEBUG:');
+      console.log('🔥 units:', units);
+      console.log('🔥 purchasePrice:', purchasePrice);
+      console.log('🔥 currentPrice:', currentPrice);
+      console.log('🔥 totalInvested:', totalInvested);
+      console.log('🔥 currentValue:', currentValue);
+      console.log('🔥 gainLoss:', gainLoss);
+      console.log('🔥 returnPercentage:', returnPercentage);
       
       return {
         totalInvested,
         currentValue,
+        gainLoss,
+        returnPercentage,
         units: `${units} pay`,
-        extraInfo: currentPrice === purchasePrice ? 'Güncel fiyat girilmemiş (kazanç 0)' : null
+        extraInfo: currentPrice === purchasePrice ? 'Güncel fiyat girilmemiş (kazanç 0)' : `Getiri: %${returnPercentage.toFixed(2)}`
       };
     }
   },

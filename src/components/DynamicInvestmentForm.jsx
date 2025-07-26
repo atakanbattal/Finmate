@@ -464,7 +464,7 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
                   <h4 className="font-medium text-blue-900">Hesaplama Önizlemesi</h4>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="text-blue-700 font-medium">Yatırılan Tutar:</span>
                     <div className="text-blue-900 font-semibold">
@@ -482,6 +482,13 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
                     <div className={`font-semibold ${calculations.currentValue >= calculations.totalInvested ? 'text-green-600' : 'text-red-600'}`}>
                       {calculations.currentValue >= calculations.totalInvested ? '+' : ''}
                       ₺{(calculations.currentValue - calculations.totalInvested).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-blue-700 font-medium">Getiri Oranı:</span>
+                    <div className={`font-semibold ${calculations.returnPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculations.returnPercentage >= 0 ? '+' : ''}
+                      %{calculations.returnPercentage?.toFixed(2) || '0.00'}
                     </div>
                   </div>
                 </div>

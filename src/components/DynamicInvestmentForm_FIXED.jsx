@@ -487,4 +487,3 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
 };
 
 export default DynamicInvestmentForm;
-export { investmentTypes };

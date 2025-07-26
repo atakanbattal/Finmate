@@ -416,8 +416,11 @@ export const calculateDCAMetrics = (transactions, currentPricePerUnit = 0) => {
  * @returns {Object} Updated investment with DCA metrics
  */
 export const addTransactionToInvestment = (investment, newTransaction, currentPricePerUnit = 0) => {
-  // Ensure transactions array exists
-  const existingTransactions = investment.transactions || [];
+  // ÖNCE: Yatırımı DCA formatına migrate et (ilk işlemi oluştur)
+  const migratedInvestment = migrateInvestmentToDCA(investment);
+  
+  // Ensure transactions array exists (artık migrate edilmiş)
+  const existingTransactions = migratedInvestment.transactions || [];
   
   // Create new transaction with ID and timestamp
   const transaction = {
@@ -439,13 +442,15 @@ export const addTransactionToInvestment = (investment, newTransaction, currentPr
   console.log('🔄 DCA TRANSACTION ADDED - Debug Info:');
   console.log('🔄 Original investment amount:', investment.amount);
   console.log('🔄 Original investment currentValue:', investment.currentValue);
+  console.log('🔄 Migrated investment transactions:', migratedInvestment.transactions?.length || 0);
+  console.log('🔄 Existing transactions before add:', existingTransactions.length);
   console.log('🔄 New transaction amount:', transaction.totalAmount);
   console.log('🔄 DCA calculated totalInvested:', dcaMetrics.totalInvested);
   console.log('🔄 DCA calculated currentTotalValue:', dcaMetrics.currentTotalValue);
   
   // Return updated investment
   const updatedInvestment = {
-    ...investment,
+    ...migratedInvestment,
     transactions: allTransactions,
     // Update DCA fields
     totalQuantity: dcaMetrics.totalQuantity,

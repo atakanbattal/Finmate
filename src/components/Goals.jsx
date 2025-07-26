@@ -89,24 +89,38 @@ const Goals = () => {
 
     const handleSubmit = (e) => {
       e.preventDefault();
-      if (!formData.title || !formData.targetAmount || !formData.targetDate) {
-        alert('Lütfen tüm zorunlu alanları doldurun');
-        return;
-      }
-
-      const goalData = {
-        ...formData,
-        targetAmount: parseFloat(formData.targetAmount),
-        currentAmount: parseFloat(formData.currentAmount || 0)
-      };
-
-      if (goal) {
-        actions.updateGoal({ ...goal, ...goalData });
-      } else {
-        actions.addGoal(createGoal(goalData));
-      }
       
-      onClose();
+      try {
+        if (!formData.title || !formData.targetAmount || !formData.targetDate) {
+          alert('Lütfen tüm zorunlu alanları doldurun');
+          return;
+        }
+
+        const goalData = {
+          ...formData,
+          targetAmount: parseFloat(formData.targetAmount) || 0,
+          currentAmount: parseFloat(formData.currentAmount || 0)
+        };
+
+        console.log('Submitting goal data:', goalData);
+
+        if (goal) {
+          console.log('Updating existing goal:', goal.id);
+          actions.updateGoal({ ...goal, ...goalData });
+        } else {
+          console.log('Creating new goal');
+          const newGoal = createGoal(goalData);
+          console.log('New goal created:', newGoal);
+          actions.addGoal(newGoal);
+        }
+        
+        console.log('Goal operation completed, closing modal');
+        onClose();
+      } catch (error) {
+        console.error('Error submitting goal:', error);
+        alert('Hedef kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+        // Don't close the modal on error so user can retry
+      }
     };
 
     return (

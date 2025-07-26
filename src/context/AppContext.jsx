@@ -21,6 +21,8 @@ const initialState = {
   goals: [],
   debts: [],
   currentUser: 'default',
+  activeModal: null,
+  modalData: null,
   settings: {
     savingsPercentage: 30, // Default 30% of net cash flow goes to goals
     autoGoalContribution: true,
@@ -62,6 +64,8 @@ const ActionTypes = {
   ADD_DEBT: 'ADD_DEBT',
   UPDATE_DEBT: 'UPDATE_DEBT',
   DELETE_DEBT: 'DELETE_DEBT',
+  SET_ACTIVE_MODAL: 'SET_ACTIVE_MODAL',
+  CLOSE_MODAL: 'CLOSE_MODAL',
   LOAD_DATA: 'LOAD_DATA',
   CLEAR_DATA: 'CLEAR_DATA'
 };
@@ -237,6 +241,20 @@ function appReducer(state, action) {
         debts: state.debts.filter(debt => debt.id !== action.payload)
       };
     
+    case ActionTypes.SET_ACTIVE_MODAL:
+      return {
+        ...state,
+        activeModal: action.payload.modalType,
+        modalData: action.payload.data || null
+      };
+    
+    case ActionTypes.CLOSE_MODAL:
+      return {
+        ...state,
+        activeModal: null,
+        modalData: null
+      };
+    
     case ActionTypes.LOAD_DATA:
       return {
         ...state,
@@ -273,6 +291,8 @@ export function AppProvider({ children }) {
           debts: parsedData.debts || [],
           users: parsedData.users || initialState.users,
           currentUser: parsedData.currentUser || initialState.currentUser,
+          activeModal: null, // Modal state'i localStorage'dan yükleme
+          modalData: null,
           settings: { ...initialState.settings, ...parsedData.settings },
           filters: { ...initialState.filters, ...parsedData.filters }
         };
@@ -472,6 +492,13 @@ export function AppProvider({ children }) {
     
     deleteDebt: (id) => 
       dispatch({ type: ActionTypes.DELETE_DEBT, payload: id }),
+
+    // Modal yönetimi metodları
+    setActiveModal: (modalType, data = null) => 
+      dispatch({ type: ActionTypes.SET_ACTIVE_MODAL, payload: { modalType, data } }),
+    
+    closeModal: () => 
+      dispatch({ type: ActionTypes.CLOSE_MODAL }),
 
     // Otomatik yatırım güncellemesi metodları
     updateInvestmentsWithMarketData: async (marketData) => {

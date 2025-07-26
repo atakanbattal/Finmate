@@ -246,6 +246,34 @@ const CashManagement = () => {
   // Get goals that can use available cash
   const availableGoals = state.goals.filter(goal => !goal.completed);
 
+  // Calculate debts summary
+  const debtsSummary = useMemo(() => {
+    if (!state.debts || state.debts.length === 0) {
+      return {
+        totalDebt: 0,
+        totalPaid: 0,
+        remainingDebt: 0,
+        overdueCount: 0
+      };
+    }
+
+    const totalDebt = state.debts.reduce((sum, debt) => sum + (debt.totalAmount || 0), 0);
+    const totalPaid = state.debts.reduce((sum, debt) => sum + (debt.paidAmount || 0), 0);
+    const remainingDebt = totalDebt - totalPaid;
+    
+    const overdueCount = state.debts.filter(debt => {
+      if (!debt.dueDate) return false;
+      return new Date(debt.dueDate) < new Date();
+    }).length;
+
+    return {
+      totalDebt,
+      totalPaid,
+      remainingDebt,
+      overdueCount
+    };
+  }, [state.debts]);
+
   const StatCard = ({ title, value, icon: Icon, color = 'blue' }) => {
     const colorClasses = {
       blue: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -327,7 +355,7 @@ const CashManagement = () => {
 
 
       {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard
           title="Toplam Servet"
           value={cashData.totalWealth}
@@ -352,6 +380,19 @@ const CashManagement = () => {
           icon={cashData.netCashFlow > 0 ? TrendingUp : TrendingDown}
           color={cashData.netCashFlow > 0 ? 'green' : 'red'}
         />
+        <div className="relative">
+          <StatCard
+            title="Kalan Borç"
+            value={debtsSummary.remainingDebt}
+            icon={CreditCard}
+            color="orange"
+          />
+          {debtsSummary.overdueCount > 0 && (
+            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+              {debtsSummary.overdueCount}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Cash vs Investment Distribution */}

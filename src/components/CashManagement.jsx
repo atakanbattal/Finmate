@@ -13,8 +13,203 @@ import {
   Target,
   Info,
   Plus,
-  Minus
+  Minus,
+  CreditCard,
+  AlertTriangle,
+  Edit,
+  Trash2
 } from 'lucide-react';
+
+// DebtModal Component
+const DebtModal = ({ debt, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: debt?.name || '',
+    creditor: debt?.creditor || '',
+    totalAmount: debt?.totalAmount || '',
+    paidAmount: debt?.paidAmount || '',
+    interestRate: debt?.interestRate || '',
+    monthlyPayment: debt?.monthlyPayment || '',
+    dueDate: debt?.dueDate || '',
+    notes: debt?.notes || ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.creditor || !formData.totalAmount) {
+      alert('Lütfen zorunlu alanları doldurun');
+      return;
+    }
+
+    const debtData = {
+      id: debt?.id || `debt-${Date.now()}`,
+      name: formData.name,
+      creditor: formData.creditor,
+      totalAmount: parseFloat(formData.totalAmount) || 0,
+      paidAmount: parseFloat(formData.paidAmount) || 0,
+      interestRate: parseFloat(formData.interestRate) || 0,
+      monthlyPayment: parseFloat(formData.monthlyPayment) || 0,
+      dueDate: formData.dueDate || null,
+      notes: formData.notes,
+      createdAt: debt?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    onSave(debtData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {debt ? 'Borç Düzenle' : 'Yeni Borç Ekle'}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Borç Adı *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Kredi kartı, konut kredisi, vb."
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Alacaklı *
+              </label>
+              <input
+                type="text"
+                value={formData.creditor}
+                onChange={(e) => setFormData({ ...formData, creditor: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Banka adı, kurum adı, vb."
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Toplam Borç *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.totalAmount}
+                  onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ödenen Tutar
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.paidAmount}
+                  onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Faiz Oranı (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.interestRate}
+                  onChange={(e) => setFormData({ ...formData, interestRate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Aylık Ödeme
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.monthlyPayment}
+                  onChange={(e) => setFormData({ ...formData, monthlyPayment: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Vade Tarihi
+              </label>
+              <input
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notlar
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                rows={3}
+                placeholder="Ek bilgiler, hatırlatmalar, vb."
+              />
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
+              >
+                {debt ? 'Güncelle' : 'Ekle'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CashManagement = () => {
   const { state, actions } = useApp();
@@ -23,6 +218,8 @@ const CashManagement = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPerson, setSelectedPerson] = useState('all');
   const [showProjection, setShowProjection] = useState(true);
+  const [showDebtModal, setShowDebtModal] = useState(false);
+  const [editingDebt, setEditingDebt] = useState(null);
 
   // Removed - using direct month/year selection now
 
@@ -352,7 +549,7 @@ const CashManagement = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <button 
             onClick={() => actions.setActiveModal('addTransaction', { type: 'income' })}
             className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors"
@@ -384,8 +581,155 @@ const CashManagement = () => {
             <Target className="h-5 w-5 text-purple-600 mr-2" />
             <span className="text-purple-700 font-medium">Hedef Ekle</span>
           </button>
+          
+          <button 
+            onClick={() => setShowDebtModal(true)}
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-colors"
+          >
+            <CreditCard className="h-5 w-5 text-orange-600 mr-2" />
+            <span className="text-orange-700 font-medium">Borç Ekle</span>
+          </button>
         </div>
       </div>
+
+      {/* Debts Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Borçlar</h2>
+          <button
+            onClick={() => setShowDebtModal(true)}
+            className="btn-primary"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Borç Ekle
+          </button>
+        </div>
+        
+        {state.debts && state.debts.length > 0 ? (
+          <div className="space-y-3">
+            {state.debts.map(debt => {
+              const remainingAmount = debt.totalAmount - (debt.paidAmount || 0);
+              const progress = ((debt.paidAmount || 0) / debt.totalAmount) * 100;
+              
+              return (
+                <div key={debt.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      <CreditCard className="h-5 w-5 text-orange-600 mr-2" />
+                      <div>
+                        <h3 className="font-medium text-gray-900">{debt.name}</h3>
+                        <p className="text-sm text-gray-500">{debt.creditor}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          setEditingDebt(debt);
+                          setShowDebtModal(true);
+                        }}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Düzenle"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('Bu borcu silmek istediğinizden emin misiniz?')) {
+                            actions.deleteDebt(debt.id);
+                          }
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Sil"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Toplam Borç</p>
+                      <p className="font-semibold text-gray-900">{formatCurrency(debt.totalAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Ödenen</p>
+                      <p className="font-semibold text-green-600">{formatCurrency(debt.paidAmount || 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Kalan</p>
+                      <p className="font-semibold text-red-600">{formatCurrency(remainingAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Faiz Oranı</p>
+                      <p className="font-semibold text-gray-900">%{debt.interestRate || 0}</p>
+                    </div>
+                  </div>
+                  
+                  {debt.dueDate && (
+                    <div className="flex items-center text-sm text-gray-600 mb-2">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>Vade: {new Date(debt.dueDate).toLocaleDateString('tr-TR')}</span>
+                      {new Date(debt.dueDate) < new Date() && (
+                        <AlertTriangle className="h-4 w-4 ml-2 text-red-500" />
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(progress, 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>%{progress.toFixed(1)} ödendi</span>
+                    <span>{debt.monthlyPayment ? `Aylık: ${formatCurrency(debt.monthlyPayment)}` : ''}</span>
+                  </div>
+                  
+                  {debt.notes && (
+                    <p className="text-sm text-gray-600 mt-2 italic">{debt.notes}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-2">Henüz borç kaydı bulunmuyor</p>
+            <p className="text-sm text-gray-400 mb-4">
+              Borçlarınızı ekleyerek takip etmeye başlayın
+            </p>
+            <button
+              onClick={() => setShowDebtModal(true)}
+              className="btn-primary"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              İlk Borcunuzu Ekleyin
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Debt Modal */}
+      {showDebtModal && (
+        <DebtModal
+          debt={editingDebt}
+          onClose={() => {
+            setShowDebtModal(false);
+            setEditingDebt(null);
+          }}
+          onSave={(debtData) => {
+            if (editingDebt) {
+              actions.updateDebt({ ...editingDebt, ...debtData });
+            } else {
+              actions.addDebt(debtData);
+            }
+            setShowDebtModal(false);
+            setEditingDebt(null);
+          }}
+        />
+      )}
     </div>
   );
 };

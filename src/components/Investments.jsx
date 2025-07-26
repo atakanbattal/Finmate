@@ -10,7 +10,9 @@ import {
   Percent,
   Calculator,
   Info,
-  History
+  History,
+  Search,
+  Filter
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import InvestmentDetailModal from './InvestmentDetailModal';
@@ -26,6 +28,11 @@ const Investments = () => {
   const [editingInvestment, setEditingInvestment] = useState(null);
   const [viewingInvestment, setViewingInvestment] = useState(null);
   const [viewingTransactionHistory, setViewingTransactionHistory] = useState(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState('all');
+  const [sortBy, setSortBy] = useState('name'); // 'name', 'type', 'amount', 'gain'
 
   // Calculate portfolio metrics with improved error handling
   const portfolioMetrics = useMemo(() => {
@@ -117,6 +124,63 @@ const Investments = () => {
   }, [investments, investmentTypes]); // DÜZELTİLDİ: investmentTypes dependency eklendi
   
   const { totalInvested, currentValue, totalGains, gainPercentage } = portfolioMetrics;
+
+  // Filter and search investments
+  const filteredInvestments = useMemo(() => {
+    let filtered = [...investments];
+    
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(investment => 
+        investment.name?.toLowerCase().includes(searchLower) ||
+        investment.notes?.toLowerCase().includes(searchLower) ||
+        (investmentTypes[investment.type]?.name || '').toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Apply type filter
+    if (selectedType !== 'all') {
+      filtered = filtered.filter(investment => investment.type === selectedType);
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'type':
+          const typeA = investmentTypes[a.type]?.name || '';
+          const typeB = investmentTypes[b.type]?.name || '';
+          return typeA.localeCompare(typeB);
+        case 'amount':
+          return (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0);
+        case 'gain':
+          const gainA = calculateInvestmentGain(a);
+          const gainB = calculateInvestmentGain(b);
+          return gainB - gainA;
+        default:
+          return 0;
+      }
+    });
+    
+    return filtered;
+  }, [investments, searchTerm, selectedType, sortBy, investmentTypes]);
+  
+  // Helper function to calculate investment gain
+  const calculateInvestmentGain = (investment) => {
+    try {
+      if (investment.type && investmentTypes[investment.type]) {
+        const calc = investmentTypes[investment.type].calculate(investment, investment);
+        return calc.gainLoss || 0;
+      }
+      const invested = parseFloat(investment.amount) || 0;
+      const current = parseFloat(investment.currentValue) || invested;
+      return current - invested;
+    } catch {
+      return 0;
+    }
+  };
 
   const InvestmentModal = ({ investment, onClose }) => {
     const handleSubmit = (investmentData) => {
@@ -277,13 +341,73 @@ const Investments = () => {
       {/* Investments List */}
       <div className="card">
         <div className="p-4 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">
-            Yatırımlarım ({investments.length})
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h3 className="font-semibold text-gray-900">
+              Yatırımlarım ({filteredInvestments.length})
+            </h3>
+            
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Yatırım ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-full sm:w-64"
+                />
+              </div>
+              
+              {/* Type Filter */}
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">Tüm Türler</option>
+                <option value="stock">Hisse Senedi</option>
+                <option value="fund">Yatırım Fonu</option>
+                <option value="crypto">Kripto Para</option>
+                <option value="gold">Altın</option>
+                <option value="deposit">Vadeli Mevduat</option>
+                <option value="bond">Tahvil</option>
+                <option value="realestate">Gayrimenkul</option>
+                <option value="commodity">Emtia</option>
+                <option value="forex">Döviz</option>
+                <option value="machinery">Makine</option>
+                <option value="equipment">Ekipman</option>
+                <option value="vehicle">Araç</option>
+              </select>
+              
+              {/* Sort Options */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="name">İsme Göre</option>
+                <option value="amount">Yatırım Tutarına Göre</option>
+                <option value="currentValue">Güncel Değere Göre</option>
+                <option value="gain">Kazanca Göre</option>
+                <option value="gainPercentage">Getiri Oranına Göre</option>
+                <option value="date">Tarihe Göre</option>
+              </select>
+              
+              {/* Filter Icon */}
+              <button
+                className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+                title="Filtreler"
+              >
+                <Filter className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
         
         <div className="divide-y divide-gray-200">
-          {investments.map(investment => {
+          {filteredInvestments.map(investment => {
             // Güvenli yatırım hesaplama
             const investedAmount = parseFloat(investment.amount) || 0;
             let currentValue = investedAmount; // fallback to invested amount
@@ -519,6 +643,7 @@ const Investments = () => {
             );
           })}
           
+          {/* Empty state for no investments */}
           {investments.length === 0 && (
             <div className="p-8 text-center">
               <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -532,6 +657,28 @@ const Investments = () => {
               >
                 <Plus className="h-4 w-4 mr-2" />
                 İlk Yatırımınızı Ekleyin
+              </button>
+            </div>
+          )}
+          
+          {/* Empty state for filtered results */}
+          {investments.length > 0 && filteredInvestments.length === 0 && (
+            <div className="p-8 text-center">
+              <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 mb-2">Arama kriterlerinize uygun yatırım bulunamadı</p>
+              <p className="text-sm text-gray-400 mb-4">
+                Farklı arama terimleri veya filtreler deneyebilirsiniz
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedType('');
+                  setSortBy('name');
+                }}
+                className="btn-secondary"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filtreleri Temizle
               </button>
             </div>
           )}

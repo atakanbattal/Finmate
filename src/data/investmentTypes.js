@@ -698,6 +698,251 @@ export const investmentTypes = {
         extraInfo: currentRate === purchaseRate ? 'Güncel kur girilmemiş (kazanç 0)' : null
       };
     }
+  },
+
+  machinery: {
+    name: 'Makine',
+    fields: [
+      {
+        key: 'machineName',
+        label: 'Makine Adı',
+        type: 'text',
+        required: true,
+        placeholder: 'Örn: CNC Tezgahı, Forklift'
+      },
+      {
+        key: 'brand',
+        label: 'Marka/Model',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Siemens, Caterpillar'
+      },
+      {
+        key: 'serialNumber',
+        label: 'Seri Numarası',
+        type: 'text',
+        required: false,
+        placeholder: 'Makine seri numarası'
+      },
+      {
+        key: 'purchasePrice',
+        label: 'Alış Fiyatı (TL)',
+        type: 'number',
+        required: true,
+        placeholder: '0.00',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'currentValue',
+        label: 'Güncel Değer (TL)',
+        type: 'number',
+        required: false,
+        placeholder: 'Tahmini güncel değer',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'purchaseDate',
+        label: 'Satın Alma Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'notes',
+        label: 'Notlar',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Teknik özellikler, bakım durumu vs.'
+      }
+    ],
+    calculate: (formData) => {
+      const purchasePrice = parseFloat(formData.purchasePrice) || 0;
+      const currentValue = parseFloat(formData.currentValue) || purchasePrice;
+      
+      return {
+        totalInvested: purchasePrice,
+        currentValue: currentValue,
+        units: '1 makine',
+        extraInfo: currentValue === purchasePrice ? 'Güncel değer girilmemiş (amortisman hesaplanmamış)' : null
+      };
+    }
+  },
+
+  equipment: {
+    name: 'Ekipman',
+    fields: [
+      {
+        key: 'equipmentName',
+        label: 'Ekipman Adı',
+        type: 'text',
+        required: true,
+        placeholder: 'Örn: Laptop, Kamera, Ses Sistemi'
+      },
+      {
+        key: 'brand',
+        label: 'Marka/Model',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Apple MacBook Pro, Canon EOS'
+      },
+      {
+        key: 'category',
+        label: 'Kategori',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Bilgisayar, Fotoğraf, Müzik'
+      },
+      {
+        key: 'quantity',
+        label: 'Adet',
+        type: 'number',
+        required: true,
+        placeholder: '1',
+        min: '1',
+        step: '1'
+      },
+      {
+        key: 'purchasePrice',
+        label: 'Alış Fiyatı (Adet Başına)',
+        type: 'number',
+        required: true,
+        placeholder: '0.00',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'currentValue',
+        label: 'Güncel Değer (Adet Başına)',
+        type: 'number',
+        required: false,
+        placeholder: 'Tahmini güncel değer',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'purchaseDate',
+        label: 'Satın Alma Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'notes',
+        label: 'Notlar',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Özellikler, garanti durumu vs.'
+      }
+    ],
+    calculate: (formData) => {
+      const quantity = parseFloat(formData.quantity) || 1;
+      const purchasePrice = parseFloat(formData.purchasePrice) || 0;
+      const currentValue = parseFloat(formData.currentValue) || purchasePrice;
+      
+      const totalInvested = quantity * purchasePrice;
+      const totalCurrentValue = quantity * currentValue;
+      
+      return {
+        totalInvested,
+        currentValue: totalCurrentValue,
+        units: `${quantity} adet`,
+        extraInfo: currentValue === purchasePrice ? 'Güncel değer girilmemiş (amortisman hesaplanmamış)' : null
+      };
+    }
+  },
+
+  vehicle: {
+    name: 'Araç',
+    fields: [
+      {
+        key: 'vehicleName',
+        label: 'Araç Adı',
+        type: 'text',
+        required: true,
+        placeholder: 'Örn: BMW 320i, Ford Transit'
+      },
+      {
+        key: 'brand',
+        label: 'Marka',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: BMW, Ford, Mercedes'
+      },
+      {
+        key: 'model',
+        label: 'Model',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: 320i, Transit, C200'
+      },
+      {
+        key: 'year',
+        label: 'Model Yılı',
+        type: 'number',
+        required: false,
+        placeholder: '2020',
+        min: '1900',
+        max: '2030'
+      },
+      {
+        key: 'plateNumber',
+        label: 'Plaka',
+        type: 'text',
+        required: false,
+        placeholder: '34 ABC 123'
+      },
+      {
+        key: 'purchasePrice',
+        label: 'Alış Fiyatı (TL)',
+        type: 'number',
+        required: true,
+        placeholder: '0.00',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'currentValue',
+        label: 'Güncel Değer (TL)',
+        type: 'number',
+        required: false,
+        placeholder: 'Tahmini güncel değer',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'mileage',
+        label: 'Kilometre',
+        type: 'number',
+        required: false,
+        placeholder: '0',
+        min: '0',
+        step: '1'
+      },
+      {
+        key: 'purchaseDate',
+        label: 'Satın Alma Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'notes',
+        label: 'Notlar',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Renk, özellikler, hasar durumu vs.'
+      }
+    ],
+    calculate: (formData) => {
+      const purchasePrice = parseFloat(formData.purchasePrice) || 0;
+      const currentValue = parseFloat(formData.currentValue) || purchasePrice;
+      
+      return {
+        totalInvested: purchasePrice,
+        currentValue: currentValue,
+        units: '1 araç',
+        extraInfo: currentValue === purchasePrice ? 'Güncel değer girilmemiş (amortisman hesaplanmamış)' : null
+      };
+    }
   }
 };
 

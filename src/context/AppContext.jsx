@@ -19,6 +19,7 @@ const initialState = {
   transactions: [],
   investments: [],
   goals: [],
+  debts: [],
   currentUser: 'default',
   settings: {
     savingsPercentage: 30, // Default 30% of net cash flow goes to goals
@@ -58,6 +59,9 @@ const ActionTypes = {
   UPDATE_GOAL_PRIORITIES: 'UPDATE_GOAL_PRIORITIES',
   UPDATE_MARKET_DATA: 'UPDATE_MARKET_DATA',
   UPDATE_INVESTMENTS_WITH_MARKET_DATA: 'UPDATE_INVESTMENTS_WITH_MARKET_DATA',
+  ADD_DEBT: 'ADD_DEBT',
+  UPDATE_DEBT: 'UPDATE_DEBT',
+  DELETE_DEBT: 'DELETE_DEBT',
   LOAD_DATA: 'LOAD_DATA',
   CLEAR_DATA: 'CLEAR_DATA'
 };
@@ -213,6 +217,26 @@ function appReducer(state, action) {
         investments: action.payload
       };
     
+    case ActionTypes.ADD_DEBT:
+      return {
+        ...state,
+        debts: [...state.debts, action.payload]
+      };
+    
+    case ActionTypes.UPDATE_DEBT:
+      return {
+        ...state,
+        debts: state.debts.map(debt => 
+          debt.id === action.payload.id ? action.payload : debt
+        )
+      };
+    
+    case ActionTypes.DELETE_DEBT:
+      return {
+        ...state,
+        debts: state.debts.filter(debt => debt.id !== action.payload)
+      };
+    
     case ActionTypes.LOAD_DATA:
       return {
         ...state,
@@ -246,6 +270,7 @@ export function AppProvider({ children }) {
           transactions: parsedData.transactions || [],
           investments: parsedData.investments || [],
           goals: parsedData.goals || [],
+          debts: parsedData.debts || [],
           users: parsedData.users || initialState.users,
           currentUser: parsedData.currentUser || initialState.currentUser,
           settings: { ...initialState.settings, ...parsedData.settings },
@@ -437,6 +462,16 @@ export function AppProvider({ children }) {
     
     clearData: () => 
       dispatch({ type: ActionTypes.CLEAR_DATA }),
+
+    // Borç yönetimi metodları
+    addDebt: (debt) => 
+      dispatch({ type: ActionTypes.ADD_DEBT, payload: debt }),
+    
+    updateDebt: (debt) => 
+      dispatch({ type: ActionTypes.UPDATE_DEBT, payload: debt }),
+    
+    deleteDebt: (id) => 
+      dispatch({ type: ActionTypes.DELETE_DEBT, payload: id }),
 
     // Otomatik yatırım güncellemesi metodları
     updateInvestmentsWithMarketData: async (marketData) => {

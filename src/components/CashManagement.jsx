@@ -18,16 +18,18 @@ import {
 
 const CashManagement = () => {
   const { state, actions } = useApp();
+  const { transactions = [], users = [] } = state;
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedPerson, setSelectedPerson] = useState('all');
   const [showProjection, setShowProjection] = useState(true);
 
   // Removed - using direct month/year selection now
 
   // Calculate cash and investment totals using shared function
   const cashData = useMemo(() => {
-    return calculateCashManagementData(state, investmentTypes, selectedMonth, selectedYear);
-  }, [state.transactions, state.investments, selectedMonth, selectedYear]);
+    return calculateCashManagementData(state, investmentTypes, selectedMonth, selectedYear, selectedPerson);
+  }, [state.transactions, state.investments, selectedMonth, selectedYear, selectedPerson]);
 
   // Calculate when cash flow will improve
   const cashFlowProjection = useMemo(() => {
@@ -108,6 +110,18 @@ const CashManagement = () => {
           >
             {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
               <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+          
+          {/* Kişi Seçici */}
+          <select
+            value={selectedPerson}
+            onChange={(e) => setSelectedPerson(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-300 border border-gray-300"
+          >
+            <option value="all">Tüm Aile</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>{user.name}</option>
             ))}
           </select>
         </div>

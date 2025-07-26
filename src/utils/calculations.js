@@ -356,15 +356,21 @@ export const getRecentTransactions = (transactions, limit = 10) => {
  * @param {Array} investmentTypes - Investment types for dynamic calculation
  * @param {number} selectedMonth - Selected month (0-11)
  * @param {number} selectedYear - Selected year
+ * @param {string} selectedPerson - Selected person filter ('all' or userId)
  * @returns {Object} Cash management data
  */
-export const calculateCashManagementData = (state, investmentTypes, selectedMonth = new Date().getMonth(), selectedYear = new Date().getFullYear()) => {
+export const calculateCashManagementData = (state, investmentTypes, selectedMonth = new Date().getMonth(), selectedYear = new Date().getFullYear(), selectedPerson = 'all') => {
   // Get date range for selected month/year
   const startDate = new Date(selectedYear, selectedMonth, 1);
   const endDate = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59);
   
+  // Apply person filter first (same as Dashboard)
+  const personFilteredTransactions = selectedPerson === 'all' 
+    ? state.transactions 
+    : state.transactions.filter(t => t.userId === selectedPerson);
+  
   // Get transactions with recurring instances for selected period
-  const filteredTransactions = getTransactionsWithRecurring(state.transactions, startDate, endDate);
+  const filteredTransactions = getTransactionsWithRecurring(personFilteredTransactions, startDate, endDate);
   
   // Calculate totals - GÜVENLI HESAPLAMA
   const totalIncome = filteredTransactions
@@ -388,11 +394,11 @@ export const calculateCashManagementData = (state, investmentTypes, selectedMont
   const investmentGainLoss = totalInvestmentValue - totalInvestmentCost;
   
   // Calculate available cash from ALL transactions (not just current period) - GÜVENLI HESAPLAMA
-  const allTimeIncome = state.transactions
+  const allTimeIncome = personFilteredTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   
-  const allTimeExpenses = state.transactions
+  const allTimeExpenses = personFilteredTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
   

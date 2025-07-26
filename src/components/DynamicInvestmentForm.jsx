@@ -54,86 +54,94 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
     
     // YATIRIM TÜRÜNE GÖRE TEMEL ALANLARI DOĞRU FORM ALANLARININA MAP ET
     if (investment.type === 'fund') {
-      // Yatırım fonu için: amount → units (pay adedi)
-      initialData.units = investment.amount ? investment.amount.toString() : '';
+      // Yatırım fonu için: investment objesinden tüm alanları yükle
+      initialData.units = investment.units ? investment.units.toString() : (investment.amount ? investment.amount.toString() : '');
+      initialData.fundCode = investment.fundCode || '';
+      initialData.fundName = investment.fundName || '';
+      initialData.purchasePrice = investment.purchasePrice ? investment.purchasePrice.toString() : '';
+      initialData.currentPrice = investment.currentPrice ? investment.currentPrice.toString() : '';
       
-      // Name'den fon kodunu çıkarmaya çalış (GPT - ₺1.518.312 → GPT)
-      const nameParts = investment.name?.split(' - ');
-      if (nameParts && nameParts.length > 0) {
-        initialData.fundCode = nameParts[0] || '';
-        initialData.fundName = nameParts[0] || '';
+      // Eğer fundCode boşsa name'den çıkarmaya çalış
+      if (!initialData.fundCode) {
+        const nameParts = investment.name?.split(' - ');
+        if (nameParts && nameParts.length > 0) {
+          initialData.fundCode = nameParts[0] || '';
+          initialData.fundName = nameParts[0] || '';
+        }
       }
-      
-      // Diğer alanlar boş - kullanıcı girecek
-      initialData.purchasePrice = '';
-      initialData.currentPrice = '';
       
       console.log('✅ FUND MAPPING - units:', initialData.units);
       console.log('✅ FUND MAPPING - fundCode:', initialData.fundCode);
+      console.log('✅ FUND MAPPING - purchasePrice:', initialData.purchasePrice);
+      console.log('✅ FUND MAPPING - currentPrice:', initialData.currentPrice);
       
     } else if (investment.type === 'stock') {
-      // Hisse senedi için: amount → lots (lot adedi)
-      initialData.lots = investment.amount ? investment.amount.toString() : '';
+      // Hisse senedi için: investment objesinden tüm alanları yükle
+      initialData.lots = investment.lots ? investment.lots.toString() : (investment.amount ? investment.amount.toString() : '');
+      initialData.stockSymbol = investment.stockSymbol || '';
+      initialData.stockName = investment.stockName || '';
+      initialData.purchasePricePerLot = investment.purchasePricePerLot ? investment.purchasePricePerLot.toString() : '';
+      initialData.currentPricePerLot = investment.currentPricePerLot ? investment.currentPricePerLot.toString() : '';
       
-      // Name'den hisse kodunu çıkarmaya çalış
-      const nameParts = investment.name?.split(' - ');
-      if (nameParts && nameParts.length > 0) {
-        initialData.stockSymbol = nameParts[0] || '';
-        initialData.stockName = nameParts[0] || '';
+      // Eğer stockSymbol boşsa name'den çıkarmaya çalış
+      if (!initialData.stockSymbol) {
+        const nameParts = investment.name?.split(' - ');
+        if (nameParts && nameParts.length > 0) {
+          initialData.stockSymbol = nameParts[0] || '';
+          initialData.stockName = nameParts[0] || '';
+        }
       }
-      
-      // Diğer alanlar boş
-      initialData.purchasePricePerLot = '';
-      initialData.currentPricePerLot = '';
       
       console.log('✅ STOCK MAPPING - lots:', initialData.lots);
       console.log('✅ STOCK MAPPING - stockSymbol:', initialData.stockSymbol);
+      console.log('✅ STOCK MAPPING - purchasePricePerLot:', initialData.purchasePricePerLot);
+      console.log('✅ STOCK MAPPING - currentPricePerLot:', initialData.currentPricePerLot);
       
     } else if (investment.type === 'crypto') {
-      // Kripto için: amount → amount (miktar)
+      // Kripto için: investment objesinden tüm alanları yükle
       initialData.amount = investment.amount ? investment.amount.toString() : '';
+      initialData.cryptoSymbol = investment.cryptoSymbol || '';
+      initialData.cryptoName = investment.cryptoName || '';
+      initialData.purchasePrice = investment.purchasePrice ? investment.purchasePrice.toString() : '';
+      initialData.currentPrice = investment.currentPrice ? investment.currentPrice.toString() : '';
       
-      // Name'den kripto kodunu çıkarmaya çalış
-      const nameParts = investment.name?.split(' - ');
-      if (nameParts && nameParts.length > 0) {
-        initialData.cryptoSymbol = nameParts[0] || '';
-        initialData.cryptoName = nameParts[0] || '';
+      // Eğer cryptoSymbol boşsa name'den çıkarmaya çalış
+      if (!initialData.cryptoSymbol) {
+        const nameParts = investment.name?.split(' - ');
+        if (nameParts && nameParts.length > 0) {
+          initialData.cryptoSymbol = nameParts[0] || '';
+          initialData.cryptoName = nameParts[0] || '';
+        }
       }
-      
-      // Diğer alanlar boş
-      initialData.purchasePrice = '';
-      initialData.currentPrice = '';
       
       console.log('✅ CRYPTO MAPPING - amount:', initialData.amount);
       console.log('✅ CRYPTO MAPPING - cryptoSymbol:', initialData.cryptoSymbol);
+      console.log('✅ CRYPTO MAPPING - purchasePrice:', initialData.purchasePrice);
+      console.log('✅ CRYPTO MAPPING - currentPrice:', initialData.currentPrice);
       
     } else if (investment.type === 'gold') {
-      // Altın için: amount → weight (ağırlık)
-      initialData.weight = investment.amount ? investment.amount.toString() : '';
-      
-      // Name'den altın türünü çıkarmaya çalış
-      initialData.goldType = investment.name || '';
-      
-      // Diğer alanlar boş
-      initialData.purchasePrice = '';
-      initialData.currentPrice = '';
+      // Altın için: investment objesinden tüm alanları yükle
+      initialData.weight = investment.weight ? investment.weight.toString() : (investment.amount ? investment.amount.toString() : '');
+      initialData.goldType = investment.goldType || investment.name || '';
+      initialData.purchasePrice = investment.purchasePrice ? investment.purchasePrice.toString() : '';
+      initialData.currentPrice = investment.currentPrice ? investment.currentPrice.toString() : '';
       
       console.log('✅ GOLD MAPPING - weight:', initialData.weight);
       console.log('✅ GOLD MAPPING - goldType:', initialData.goldType);
+      console.log('✅ GOLD MAPPING - purchasePrice:', initialData.purchasePrice);
+      console.log('✅ GOLD MAPPING - currentPrice:', initialData.currentPrice);
       
     } else if (investment.type === 'deposit') {
-      // Mevduat için: amount → amount (tutar)
+      // Mevduat için: investment objesinden tüm alanları yükle
       initialData.amount = investment.amount ? investment.amount.toString() : '';
-      
-      // Name'den banka adını çıkarmaya çalış
-      initialData.bankName = investment.name || '';
-      
-      // Diğer alanlar boş
-      initialData.interestRate = '';
-      initialData.maturityDate = '';
+      initialData.bankName = investment.bankName || investment.name || '';
+      initialData.interestRate = investment.interestRate ? investment.interestRate.toString() : '';
+      initialData.maturityDate = investment.maturityDate || '';
       
       console.log('✅ DEPOSIT MAPPING - amount:', initialData.amount);
       console.log('✅ DEPOSIT MAPPING - bankName:', initialData.bankName);
+      console.log('✅ DEPOSIT MAPPING - interestRate:', initialData.interestRate);
+      console.log('✅ DEPOSIT MAPPING - maturityDate:', initialData.maturityDate);
     }
     
     console.log('✅ KESIN ÇÖZÜM - Form data initialized:', initialData);
@@ -166,86 +174,94 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
     
     // YATIRIM TÜRÜNE GÖRE TEMEL ALANLARI DOĞRU FORM ALANLARININA MAP ET
     if (investment.type === 'fund') {
-      // Yatırım fonu için: amount → units (pay adedi)
-      initialData.units = investment.amount ? investment.amount.toString() : '';
+      // Yatırım fonu için: investment objesinden tüm alanları yükle
+      initialData.units = investment.units ? investment.units.toString() : (investment.amount ? investment.amount.toString() : '');
+      initialData.fundCode = investment.fundCode || '';
+      initialData.fundName = investment.fundName || '';
+      initialData.purchasePrice = investment.purchasePrice ? investment.purchasePrice.toString() : '';
+      initialData.currentPrice = investment.currentPrice ? investment.currentPrice.toString() : '';
       
-      // Name'den fon kodunu çıkarmaya çalış (GPT - ₺1.518.312 → GPT)
-      const nameParts = investment.name?.split(' - ');
-      if (nameParts && nameParts.length > 0) {
-        initialData.fundCode = nameParts[0] || '';
-        initialData.fundName = nameParts[0] || '';
+      // Eğer fundCode boşsa name'den çıkarmaya çalış
+      if (!initialData.fundCode) {
+        const nameParts = investment.name?.split(' - ');
+        if (nameParts && nameParts.length > 0) {
+          initialData.fundCode = nameParts[0] || '';
+          initialData.fundName = nameParts[0] || '';
+        }
       }
-      
-      // Diğer alanlar boş - kullanıcı girecek
-      initialData.purchasePrice = '';
-      initialData.currentPrice = '';
       
       console.log('✅ USEEFFECT FUND MAPPING - units:', initialData.units);
       console.log('✅ USEEFFECT FUND MAPPING - fundCode:', initialData.fundCode);
+      console.log('✅ USEEFFECT FUND MAPPING - purchasePrice:', initialData.purchasePrice);
+      console.log('✅ USEEFFECT FUND MAPPING - currentPrice:', initialData.currentPrice);
       
     } else if (investment.type === 'stock') {
-      // Hisse senedi için: amount → lots (lot adedi)
-      initialData.lots = investment.amount ? investment.amount.toString() : '';
+      // Hisse senedi için: investment objesinden tüm alanları yükle
+      initialData.lots = investment.lots ? investment.lots.toString() : (investment.amount ? investment.amount.toString() : '');
+      initialData.stockSymbol = investment.stockSymbol || '';
+      initialData.stockName = investment.stockName || '';
+      initialData.purchasePricePerLot = investment.purchasePricePerLot ? investment.purchasePricePerLot.toString() : '';
+      initialData.currentPricePerLot = investment.currentPricePerLot ? investment.currentPricePerLot.toString() : '';
       
-      // Name'den hisse kodunu çıkarmaya çalış
-      const nameParts = investment.name?.split(' - ');
-      if (nameParts && nameParts.length > 0) {
-        initialData.stockSymbol = nameParts[0] || '';
-        initialData.stockName = nameParts[0] || '';
+      // Eğer stockSymbol boşsa name'den çıkarmaya çalış
+      if (!initialData.stockSymbol) {
+        const nameParts = investment.name?.split(' - ');
+        if (nameParts && nameParts.length > 0) {
+          initialData.stockSymbol = nameParts[0] || '';
+          initialData.stockName = nameParts[0] || '';
+        }
       }
-      
-      // Diğer alanlar boş
-      initialData.purchasePricePerLot = '';
-      initialData.currentPricePerLot = '';
       
       console.log('✅ USEEFFECT STOCK MAPPING - lots:', initialData.lots);
       console.log('✅ USEEFFECT STOCK MAPPING - stockSymbol:', initialData.stockSymbol);
+      console.log('✅ USEEFFECT STOCK MAPPING - purchasePricePerLot:', initialData.purchasePricePerLot);
+      console.log('✅ USEEFFECT STOCK MAPPING - currentPricePerLot:', initialData.currentPricePerLot);
       
     } else if (investment.type === 'crypto') {
-      // Kripto için: amount → amount (miktar)
+      // Kripto için: investment objesinden tüm alanları yükle
       initialData.amount = investment.amount ? investment.amount.toString() : '';
+      initialData.cryptoSymbol = investment.cryptoSymbol || '';
+      initialData.cryptoName = investment.cryptoName || '';
+      initialData.purchasePrice = investment.purchasePrice ? investment.purchasePrice.toString() : '';
+      initialData.currentPrice = investment.currentPrice ? investment.currentPrice.toString() : '';
       
-      // Name'den kripto kodunu çıkarmaya çalış
-      const nameParts = investment.name?.split(' - ');
-      if (nameParts && nameParts.length > 0) {
-        initialData.cryptoSymbol = nameParts[0] || '';
-        initialData.cryptoName = nameParts[0] || '';
+      // Eğer cryptoSymbol boşsa name'den çıkarmaya çalış
+      if (!initialData.cryptoSymbol) {
+        const nameParts = investment.name?.split(' - ');
+        if (nameParts && nameParts.length > 0) {
+          initialData.cryptoSymbol = nameParts[0] || '';
+          initialData.cryptoName = nameParts[0] || '';
+        }
       }
-      
-      // Diğer alanlar boş
-      initialData.purchasePrice = '';
-      initialData.currentPrice = '';
       
       console.log('✅ USEEFFECT CRYPTO MAPPING - amount:', initialData.amount);
       console.log('✅ USEEFFECT CRYPTO MAPPING - cryptoSymbol:', initialData.cryptoSymbol);
+      console.log('✅ USEEFFECT CRYPTO MAPPING - purchasePrice:', initialData.purchasePrice);
+      console.log('✅ USEEFFECT CRYPTO MAPPING - currentPrice:', initialData.currentPrice);
       
     } else if (investment.type === 'gold') {
-      // Altın için: amount → weight (ağırlık)
-      initialData.weight = investment.amount ? investment.amount.toString() : '';
-      
-      // Name'den altın türünü çıkarmaya çalış
-      initialData.goldType = investment.name || '';
-      
-      // Diğer alanlar boş
-      initialData.purchasePrice = '';
-      initialData.currentPrice = '';
+      // Altın için: investment objesinden tüm alanları yükle
+      initialData.weight = investment.weight ? investment.weight.toString() : (investment.amount ? investment.amount.toString() : '');
+      initialData.goldType = investment.goldType || investment.name || '';
+      initialData.purchasePrice = investment.purchasePrice ? investment.purchasePrice.toString() : '';
+      initialData.currentPrice = investment.currentPrice ? investment.currentPrice.toString() : '';
       
       console.log('✅ USEEFFECT GOLD MAPPING - weight:', initialData.weight);
       console.log('✅ USEEFFECT GOLD MAPPING - goldType:', initialData.goldType);
+      console.log('✅ USEEFFECT GOLD MAPPING - purchasePrice:', initialData.purchasePrice);
+      console.log('✅ USEEFFECT GOLD MAPPING - currentPrice:', initialData.currentPrice);
       
     } else if (investment.type === 'deposit') {
-      // Mevduat için: amount → amount (tutar)
+      // Mevduat için: investment objesinden tüm alanları yükle
       initialData.amount = investment.amount ? investment.amount.toString() : '';
-      
-      // Name'den banka adını çıkarmaya çalış
-      initialData.bankName = investment.name || '';
-      
-      // Diğer alanlar boş
-      initialData.interestRate = '';
-      initialData.maturityDate = '';
+      initialData.bankName = investment.bankName || investment.name || '';
+      initialData.interestRate = investment.interestRate ? investment.interestRate.toString() : '';
+      initialData.maturityDate = investment.maturityDate || '';
       
       console.log('✅ USEEFFECT DEPOSIT MAPPING - amount:', initialData.amount);
       console.log('✅ USEEFFECT DEPOSIT MAPPING - bankName:', initialData.bankName);
+      console.log('✅ USEEFFECT DEPOSIT MAPPING - interestRate:', initialData.interestRate);
+      console.log('✅ USEEFFECT DEPOSIT MAPPING - maturityDate:', initialData.maturityDate);
     }
     
     console.log('✅ KESIN USEEFFECT - Form data reloaded:', initialData);

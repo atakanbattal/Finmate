@@ -11,8 +11,6 @@ import {
   PieChart,
   Calendar,
   Target,
-  ArrowUpRight,
-  ArrowDownRight,
   Info,
   Plus,
   Minus
@@ -70,18 +68,7 @@ const CashManagement = () => {
     
     const investmentGainLoss = totalInvestmentValue - totalInvestmentCost;
     
-    // Calculate investment trend (change from previous month)
-    const previousMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
-    const previousYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
-    
-    // For trend calculation, we'll use a simplified approach:
-    // If we have gain/loss, show the percentage change as trend
-    const investmentReturnPercentage = totalInvestmentCost > 0 ? 
-      ((totalInvestmentValue - totalInvestmentCost) / totalInvestmentCost) * 100 : 0;
-    
-    // Calculate trend value as the gain/loss amount (this represents the "change")
-    const investmentTrendValue = investmentGainLoss;
-    const investmentTrend = investmentTrendValue >= 0 ? 'up' : 'down';
+
     
     // Calculate available cash from ALL transactions (not just current period) - GÜVENLİ HESAPLAMA
     const allTimeIncome = state.transactions
@@ -121,10 +108,7 @@ const CashManagement = () => {
       regularIncome,
       regularExpenses,
       monthlyNetRegular,
-      filteredTransactions,
-      investmentTrend,
-      investmentTrendValue,
-      investmentReturnPercentage
+      filteredTransactions
     };
   }, [state.transactions, state.investments, selectedMonth, selectedYear]);
 
@@ -146,7 +130,7 @@ const CashManagement = () => {
   // Get goals that can use available cash
   const availableGoals = state.goals.filter(goal => !goal.completed);
 
-  const StatCard = ({ title, value, icon: Icon, trend, trendValue, color = 'blue' }) => {
+  const StatCard = ({ title, value, icon: Icon, color = 'blue' }) => {
     const colorClasses = {
       blue: 'bg-blue-50 text-blue-700 border-blue-200',
       green: 'bg-green-50 text-green-700 border-green-200',
@@ -163,16 +147,6 @@ const CashManagement = () => {
             <p className="text-2xl font-bold mt-1">
               {formatCurrency(value)}
             </p>
-            {trend && (
-              <div className="flex items-center mt-2 text-sm">
-                {trend === 'up' ? (
-                  <ArrowUpRight className="h-4 w-4 mr-1" />
-                ) : (
-                  <ArrowDownRight className="h-4 w-4 mr-1" />
-                )}
-                <span>{formatCurrency(Math.abs(trendValue))}</span>
-              </div>
-            )}
           </div>
           <Icon className="h-8 w-8 opacity-75" />
         </div>
@@ -236,16 +210,12 @@ const CashManagement = () => {
           title="Mevcut Nakit"
           value={cashData.availableCash}
           icon={DollarSign}
-          trend={cashData.netCashFlow > 0 ? 'up' : 'down'}
-          trendValue={cashData.netCashFlow}
           color="green"
         />
         <StatCard
           title="Yatırım Değeri"
           value={cashData.totalInvestmentValue}
           icon={TrendingUp}
-          trend={cashData.investmentTrend}
-          trendValue={cashData.investmentTrendValue}
           color="blue"
         />
         <StatCard

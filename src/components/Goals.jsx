@@ -37,9 +37,9 @@ const Goals = () => {
   const GoalModal = ({ goal, onClose }) => {
     const [useCashAndInvestments, setUseCashAndInvestments] = useState(false);
     
-    // Calculate available cash for new goals - GÜVENLİ HESAPLAMA (CashManagement ile aynı mantık)
+    // CashManagement kartlarından değerleri al - Toplam Servet ve Mevcut Nakit kartlarının toplamını kullan
     const calculateAvailableCash = () => {
-      console.log('Calculating available cash...');
+      console.log('Calculating available cash from CashManagement cards...');
       console.log('Total transactions:', state.transactions.length);
       
       const totalIncome = state.transactions
@@ -60,9 +60,9 @@ const Goals = () => {
       console.log('Total expenses:', totalExpenses);
       console.log('Total investment cost:', totalInvestmentCost);
       
-      // Mevcut nakit = gelir - gider - yatırım maliyeti
+      // Mevcut nakit = gelir - gider - yatırım maliyeti (Mevcut Nakit kartı değeri)
       const availableCash = Math.max(0, totalIncome - totalExpenses - totalInvestmentCost);
-      console.log('Available cash:', availableCash);
+      console.log('Available cash (Mevcut Nakit kartı):', availableCash);
       
       return isNaN(availableCash) ? 0 : availableCash;
     };
@@ -80,11 +80,13 @@ const Goals = () => {
       }
     };
 
-    const availableCash = calculateAvailableCash();
+    const availableCash = calculateAvailableCash(); // Mevcut Nakit kartı değeri
     const totalInvestments = calculateTotalInvestments();
-    // Toplam servet = mevcut nakit + yatırım değeri (CashManagement ile aynı mantık)
+    // Toplam servet = mevcut nakit + yatırım değeri (Toplam Servet kartı değeri)
     const totalWealth = availableCash + totalInvestments;
-    const availableAmount = useCashAndInvestments ? totalWealth : availableCash;
+    
+    // Kullanıcının talebi: Toplam Servet + Mevcut Nakit kartlarının toplamını kullan
+    const availableAmount = useCashAndInvestments ? (totalWealth + availableCash) : availableCash;
 
     const [formData, setFormData] = useState(
       goal || {
@@ -224,7 +226,7 @@ const Goals = () => {
                         onChange={() => setUseCashAndInvestments(true)}
                         className="mr-2"
                       />
-                      <span className="text-sm">Nakit + Toplam Servet (₺{totalWealth.toLocaleString('tr-TR')})</span>
+                      <span className="text-sm">Toplam Servet + Mevcut Nakit (₺{(totalWealth + availableCash).toLocaleString('tr-TR')})</span>
                     </label>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
@@ -244,7 +246,7 @@ const Goals = () => {
                       <Target className="h-4 w-4 mr-2" />
                       <span className="font-medium">
                         {useCashAndInvestments 
-                          ? `Toplam Kullanılabilir: ₺${totalWealth.toLocaleString('tr-TR')} (Nakit: ₺${availableCash.toLocaleString('tr-TR')} + Yatırım: ₺${totalInvestments.toLocaleString('tr-TR')})`
+                          ? `Toplam Kullanılabilir: ₺${(totalWealth + availableCash).toLocaleString('tr-TR')} (Toplam Servet: ₺${totalWealth.toLocaleString('tr-TR')} + Mevcut Nakit: ₺${availableCash.toLocaleString('tr-TR')})`
                           : `Mevcut Nakitiniz: ₺${availableCash.toLocaleString('tr-TR')}`
                         }
                       </span>

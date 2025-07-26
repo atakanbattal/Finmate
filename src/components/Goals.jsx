@@ -82,7 +82,9 @@ const Goals = () => {
 
     const availableCash = calculateAvailableCash();
     const totalInvestments = calculateTotalInvestments();
-    const availableAmount = useCashAndInvestments ? availableCash + totalInvestments : availableCash;
+    // Toplam servet = mevcut nakit + yatırım değeri (CashManagement ile aynı mantık)
+    const totalWealth = availableCash + totalInvestments;
+    const availableAmount = useCashAndInvestments ? totalWealth : availableCash;
 
     const [formData, setFormData] = useState(
       goal || {
@@ -222,7 +224,7 @@ const Goals = () => {
                         onChange={() => setUseCashAndInvestments(true)}
                         className="mr-2"
                       />
-                      <span className="text-sm">Nakit + Yatırımlar (₺{(availableCash + totalInvestments).toLocaleString('tr-TR')})</span>
+                      <span className="text-sm">Nakit + Toplam Servet (₺{totalWealth.toLocaleString('tr-TR')})</span>
                     </label>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
@@ -242,7 +244,7 @@ const Goals = () => {
                       <Target className="h-4 w-4 mr-2" />
                       <span className="font-medium">
                         {useCashAndInvestments 
-                          ? `Toplam Kullanılabilir: ₺${availableAmount.toLocaleString('tr-TR')} (Nakit: ₺${availableCash.toLocaleString('tr-TR')} + Yatırım: ₺${totalInvestments.toLocaleString('tr-TR')})`
+                          ? `Toplam Kullanılabilir: ₺${totalWealth.toLocaleString('tr-TR')} (Nakit: ₺${availableCash.toLocaleString('tr-TR')} + Yatırım: ₺${totalInvestments.toLocaleString('tr-TR')})`
                           : `Mevcut Nakitiniz: ₺${availableCash.toLocaleString('tr-TR')}`
                         }
                       </span>

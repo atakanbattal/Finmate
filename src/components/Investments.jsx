@@ -9,7 +9,8 @@ import {
   Calendar,
   Percent,
   Calculator,
-  Info
+  Info,
+  History
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import InvestmentDetailModal from './InvestmentDetailModal';
@@ -24,6 +25,7 @@ const Investments = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingInvestment, setEditingInvestment] = useState(null);
   const [viewingInvestment, setViewingInvestment] = useState(null);
+  const [viewingTransactionHistory, setViewingTransactionHistory] = useState(null);
 
   // Calculate portfolio metrics with improved error handling
   const portfolioMetrics = useMemo(() => {
@@ -49,12 +51,11 @@ const Investments = () => {
         if (investment.type && investmentTypes && investmentTypes[investment.type]) {
           try {
             const dynamicCalc = investmentTypes[investment.type].calculate(
-              investment, // DÜZELTİLDİ: investment.data yerine direkt investment
-              investment.purchaseDate, 
-              investedAmount
+              investment, // formData as first parameter
+              investment  // investment object as second parameter for DCA support
             );
             if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
-              dynamicCurrentValue = dynamicCalc.currentValue;
+              dynamicCurrentValue = dynamicCalc.currentValue; // This is already total current value
               console.log(`✅ Dynamic calculation successful for ${investment.name}:`, dynamicCalc.currentValue);
               // Use totalInvested from calculation if available (more accurate)
               if (dynamicCalc.totalInvested && !isNaN(dynamicCalc.totalInvested)) {
@@ -70,14 +71,14 @@ const Investments = () => {
             console.warn(`❌ Dynamic calculation failed for ${investment.type}:`, calcError);
             // Use manual currentValue if available
             if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
-              dynamicCurrentValue = parseFloat(investment.currentValue);
+              dynamicCurrentValue = parseFloat(investment.currentValue) || 0; // Use total current value directly
               console.log(`📝 Using manual currentValue for ${investment.name}:`, dynamicCurrentValue);
             }
             totalInvested += investedAmount;
           }
         } else if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
           // Use manual currentValue if no dynamic calculation available
-          dynamicCurrentValue = parseFloat(investment.currentValue);
+          dynamicCurrentValue = parseFloat(investment.currentValue) || 0; // Use total current value directly
           console.log(`📝 Using manual currentValue (no calc) for ${investment.name}:`, dynamicCurrentValue);
           totalInvested += investedAmount;
         } else {
@@ -86,7 +87,7 @@ const Investments = () => {
           totalInvested += investedAmount;
         }
         
-        currentValue += dynamicCurrentValue;
+        currentValue += dynamicCurrentValue; // dynamicCurrentValue is already total current value, don't multiply!
         
       } catch (error) {
         console.error('Error calculating investment metrics:', error);
@@ -294,12 +295,11 @@ const Investments = () => {
               if (investment.type && investmentTypes && investmentTypes[investment.type]) {
                 try {
                   const dynamicCalc = investmentTypes[investment.type].calculate(
-                    investment, // DÜZELTİLDİ: investment.data yerine direkt investment
-                    investment.purchaseDate, 
-                    investedAmount
+                    investment, // formData as first parameter
+                    investment  // investment object as second parameter for DCA support
                   );
                   if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
-                    currentValue = dynamicCalc.currentValue;
+                    currentValue = dynamicCalc.currentValue; // This is already total current value
                     console.log(`🔄 Individual card - Dynamic calculation for ${investment.name}:`, dynamicCalc.currentValue);
                     // Use more accurate totalInvested from calculation if available
                     if (dynamicCalc.totalInvested && !isNaN(dynamicCalc.totalInvested)) {
@@ -312,17 +312,17 @@ const Investments = () => {
                   console.warn(`❌ Individual card - Dynamic calculation failed for ${investment.type}:`, calcError);
                   // Use manual currentValue if available
                   if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
-                    currentValue = parseFloat(investment.currentValue);
+                    currentValue = parseFloat(investment.currentValue) || 0; // Use total current value directly
                     console.log(`📝 Individual card - Using manual currentValue for ${investment.name}:`, currentValue);
                   }
                 }
               } else if (investment.currentValue && !isNaN(parseFloat(investment.currentValue))) {
                 // Use manual currentValue if no dynamic calculation available
-                currentValue = parseFloat(investment.currentValue);
+                currentValue = parseFloat(investment.currentValue) || 0; // Use total current value directly
                 console.log(`📝 Individual card - Using manual currentValue (no calc) for ${investment.name}:`, currentValue);
               }
               
-              gain = currentValue - totalInvested;
+              gain = currentValue - totalInvested; // currentValue is already total current value, don't multiply!
             } catch (error) {
               console.error('Error in individual investment calculation:', error);
               gain = 0;
@@ -454,9 +454,8 @@ const Investments = () => {
                     {investment.type && investmentTypes[investment.type] && (() => {
                       try {
                         const calc = investmentTypes[investment.type].calculate(
-                          investment, // DÜZELTİLDİ: investment.data yerine direkt investment
-                          investment.purchaseDate, 
-                          investment.amount
+                          investment, // formData as first parameter
+                          investment  // investment object as second parameter for DCA support
                         );
                         // Vadeli mevduat için vade sonu değerini göster
                         if (investment.type === 'deposit' && calc.maturityValue) {
@@ -477,6 +476,19 @@ const Investments = () => {
                   </div>
                   
                   <div className="flex space-x-1">
+                    {/* İşlem Geçmişi butonu - sadece DCA yatırımları için göster */}
+                    {investment.transactions && investment.transactions.length > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingTransactionHistory(investment);
+                        }}
+                        className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        title="İşlem Geçmişi"
+                      >
+                        <History className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -542,9 +554,8 @@ const Investments = () => {
                   if (inv.type && investmentTypes && investmentTypes[inv.type]) {
                     try {
                       const dynamicCalc = investmentTypes[inv.type].calculate(
-                        inv, // DÜZELTİLDİ: inv.data yerine direkt inv
-                        inv.purchaseDate, 
-                        investedAmount
+                        inv, // formData as first parameter
+                        inv  // investment object as second parameter for DCA support
                       );
                       if (dynamicCalc && typeof dynamicCalc.currentValue === 'number' && !isNaN(dynamicCalc.currentValue)) {
                         dynamicCurrentValue = dynamicCalc.currentValue;
@@ -625,6 +636,173 @@ const Investments = () => {
           }}
         />
       )}
+      
+      {viewingTransactionHistory && (
+        <TransactionHistoryModal
+          investment={viewingTransactionHistory}
+          onClose={() => setViewingTransactionHistory(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+// Transaction History Modal Component
+const TransactionHistoryModal = ({ investment, onClose }) => {
+  
+  if (!investment || !investment.transactions || investment.transactions.length === 0) {
+    return null;
+  }
+  
+  // DCA hesaplamalarını yap
+  const totalQuantity = investment.totalQuantity || 0;
+  const averageCost = investment.averageCost || 0;
+  const totalInvested = investment.totalInvested || 0;
+  
+  // Transaction'ları tarihe göre sırala (en yeni önce)
+  const sortedTransactions = [...investment.transactions].sort((a, b) => 
+    new Date(b.date) - new Date(a.date)
+  );
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold flex items-center">
+                <History className="h-5 w-5 mr-2" />
+                İşlem Geçmişi
+              </h2>
+              <p className="text-purple-100 text-sm mt-1">{investment.name}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-purple-100 hover:text-white transition-colors p-1"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {/* DCA Özet Bilgileri */}
+        <div className="px-6 py-4 bg-purple-50 border-b">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Toplam İşlem</p>
+              <p className="text-lg font-bold text-purple-600">{investment.transactions.length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Toplam Adet/Lot</p>
+              <p className="text-lg font-bold text-purple-600">{totalQuantity.toFixed(2)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Ortalama Maliyet</p>
+              <p className="text-lg font-bold text-purple-600">{formatCurrency(averageCost)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Toplam Yatırım</p>
+              <p className="text-lg font-bold text-purple-600">{formatCurrency(totalInvested)}</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Transaction Listesi */}
+        <div className="overflow-y-auto max-h-96">
+          <div className="px-6 py-4">
+            <div className="space-y-4">
+              {sortedTransactions.map((transaction, index) => {
+                const isLatest = index === 0;
+                return (
+                  <div 
+                    key={transaction.id || index}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      isLatest 
+                        ? 'border-purple-200 bg-purple-50' 
+                        : 'border-gray-200 bg-white hover:border-purple-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isLatest ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          <span className="text-sm font-bold">#{sortedTransactions.length - index}</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {new Date(transaction.date).toLocaleDateString('tr-TR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          {isLatest && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">
+                              En Son İşlem
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900">
+                          {formatCurrency(transaction.totalAmount)}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {transaction.quantity} adet × {formatCurrency(transaction.pricePerUnit)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* İşlem Detayları */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500 mb-1">Adet/Lot</p>
+                        <p className="font-medium text-gray-900">{transaction.quantity}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 mb-1">Birim Fiyat</p>
+                        <p className="font-medium text-gray-900">{formatCurrency(transaction.pricePerUnit)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 mb-1">Toplam Tutar</p>
+                        <p className="font-medium text-gray-900">{formatCurrency(transaction.totalAmount)}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Notlar */}
+                    {transaction.notes && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Not:</span> {transaction.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Toplam {investment.transactions.length} işlem gösteriliyor
+            </p>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Kapat
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

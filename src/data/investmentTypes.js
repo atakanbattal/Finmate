@@ -52,7 +52,41 @@ export const investmentTypes = {
         placeholder: 'Ek bilgiler...'
       }
     ],
-    calculate: (formData) => {
+    calculate: (formData, investment) => {
+      // Check if this is a DCA investment with transactions
+      if (investment && investment.transactions && investment.transactions.length > 0) {
+        // DCA hesaplamaları - güncel fiyatı formData'dan al
+        const totalInvested = investment.totalInvested || investment.amount || 0;
+        const totalQuantity = investment.totalQuantity || 0;
+        const averageCost = investment.averageCost || 0;
+        
+        // CRITICAL FIX: Güncel fiyatı formData'dan al, sabit değer kullanma!
+        const currentPrice = parseFloat(formData.currentPricePerLot) || 0;
+        const currentValue = currentPrice * totalQuantity; // Yeniden hesapla!
+        
+        const gainLoss = currentValue - totalInvested;
+        const returnPercentage = totalInvested > 0 ? (gainLoss / totalInvested) * 100 : 0;
+        
+        console.log('🔥 STOCK DCA CALCULATE DEBUG (FIXED):');
+        console.log('🔥 DCA totalQuantity:', totalQuantity);
+        console.log('🔥 DCA averageCost:', averageCost);
+        console.log('🔥 DCA totalInvested:', totalInvested);
+        console.log('🔥 DCA currentPrice (from form):', currentPrice);
+        console.log('🔥 DCA currentValue (recalculated):', currentValue);
+        console.log('🔥 DCA gainLoss:', gainLoss);
+        console.log('🔥 DCA returnPercentage:', returnPercentage);
+        
+        return {
+          totalInvested,
+          currentValue,
+          gainLoss,
+          returnPercentage,
+          units: `${totalQuantity.toFixed(2)} lot`,
+          extraInfo: `DCA - Ortalama maliyet: ₺${averageCost.toFixed(4)}`
+        };
+      }
+      
+      // Legacy calculation for non-DCA investments
       const lots = parseFloat(formData.lots) || 0;
       const purchasePrice = parseFloat(formData.purchasePricePerLot) || 0;
       const currentPrice = parseFloat(formData.currentPricePerLot) || purchasePrice;
@@ -135,7 +169,41 @@ export const investmentTypes = {
         placeholder: 'Ek bilgiler...'
       }
     ],
-    calculate: (formData) => {
+    calculate: (formData, investment) => {
+      // Check if this is a DCA investment with transactions
+      if (investment && investment.transactions && investment.transactions.length > 0) {
+        // DCA hesaplamaları - güncel fiyatı formData'dan al
+        const totalInvested = investment.totalInvested || investment.amount || 0;
+        const totalQuantity = investment.totalQuantity || 0;
+        const averageCost = investment.averageCost || 0;
+        
+        // CRITICAL FIX: Güncel fiyatı formData'dan al, sabit değer kullanma!
+        const currentPrice = parseFloat(formData.currentPrice) || 0;
+        const currentValue = currentPrice * totalQuantity; // Yeniden hesapla!
+        
+        const gainLoss = currentValue - totalInvested;
+        const returnPercentage = totalInvested > 0 ? (gainLoss / totalInvested) * 100 : 0;
+        
+        console.log('🔥 FUND DCA CALCULATE DEBUG (FIXED):');
+        console.log('🔥 DCA totalQuantity:', totalQuantity);
+        console.log('🔥 DCA averageCost:', averageCost);
+        console.log('🔥 DCA totalInvested:', totalInvested);
+        console.log('🔥 DCA currentPrice (from form):', currentPrice);
+        console.log('🔥 DCA currentValue (recalculated):', currentValue);
+        console.log('🔥 DCA gainLoss:', gainLoss);
+        console.log('🔥 DCA returnPercentage:', returnPercentage);
+        
+        return {
+          totalInvested,
+          currentValue,
+          gainLoss,
+          returnPercentage,
+          units: `${totalQuantity.toFixed(2)} pay`,
+          extraInfo: `DCA - Ortalama maliyet: ₺${averageCost.toFixed(4)}`
+        };
+      }
+      
+      // Legacy calculation for non-DCA investments
       const units = parseFloat(formData.units) || 0;
       const purchasePrice = parseFloat(formData.purchasePrice) || 0;
       const currentPrice = parseFloat(formData.currentPrice) || purchasePrice;

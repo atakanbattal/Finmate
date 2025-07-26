@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Calculator, Info } from 'lucide-react';
+import { Calculator, Info, Plus, TrendingUp } from 'lucide-react';
 import { investmentTypes } from '../data/investmentTypes';
+import { useApp } from '../context/AppContext';
+import { calculateDCAMetrics, formatDCADisplay } from '../utils/calculations';
 
 const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
   console.log('🔍 DYNAMICINVESTMENTFORM RENDER - Gelen investment prop:', investment);
+  
+  const { state, actions } = useApp();
+  const { addInvestmentTransaction } = actions;
+  const [dcaMode, setDcaMode] = useState(false); // DCA mode: false = new investment, true = add to existing
+  const [selectedExistingInvestment, setSelectedExistingInvestment] = useState(null);
   
   // Investment objesinin yapısını analiz et
   if (investment) {
@@ -299,8 +306,22 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    console.log('🚀 FORM SUBMIT STARTED');
+    console.log('🚀 investmentType:', investmentType);
+    console.log('🚀 dcaMode:', dcaMode);
+    console.log('🚀 selectedExistingInvestment:', selectedExistingInvestment);
+    console.log('🚀 formData:', formData);
+    
     if (!investmentType) {
+      console.log('❌ Investment type not selected');
       alert('Lütfen yatırım türünü seçin');
+      return;
+    }
+
+    // DCA mode validation
+    if (dcaMode && !selectedExistingInvestment) {
+      console.log('❌ DCA mode but no existing investment selected');
+      alert('Lütfen eklemek istediğiniz mevcut yatırımı seçin');
       return;
     }
 
@@ -359,6 +380,55 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       }
     }
 
+    // Handle DCA mode vs regular investment creation
+    if (dcaMode && selectedExistingInvestment) {
+      // DCA Mode: Add transaction to existing investment
+      const quantity = parseFloat(formData.quantity || formData.units || formData.lots || formData.amount || 1);
+      const pricePerUnit = quantity > 0 ? calculatedAmount / quantity : calculatedAmount;
+      const currentPricePerUnit = quantity > 0 ? calculatedCurrentValue / quantity : calculatedCurrentValue;
+      
+      const newTransaction = {
+        date: formData.purchaseDate || new Date().toISOString().split('T')[0],
+        quantity: quantity,
+        pricePerUnit: pricePerUnit,
+        totalAmount: calculatedAmount,
+        notes: formData.notes || `${investmentName} - Yeni alım`,
+        // Include type-specific fields
+        ...formData
+      };
+      
+      console.log('🔄 DCA MODE - Adding transaction to existing investment:', {
+        investmentId: selectedExistingInvestment.id,
+        transaction: newTransaction,
+        currentPricePerUnit: currentPricePerUnit
+      });
+      
+      try {
+        console.log('📞 Calling addInvestmentTransaction...');
+        addInvestmentTransaction(selectedExistingInvestment.id, newTransaction, currentPricePerUnit);
+        console.log('✅ addInvestmentTransaction completed successfully');
+        
+        // Close modal
+        console.log('📞 Calling onCancel to close modal...');
+        console.log('📞 onCancel type:', typeof onCancel);
+        console.log('📞 onCancel function:', onCancel);
+        
+        if (typeof onCancel === 'function') {
+          onCancel();
+          console.log('✅ onCancel called successfully');
+        } else {
+          console.error('❌ onCancel is not a function!', onCancel);
+          alert('DCA transaction eklendi ancak modal kapatılamadı. Sayfayı yenileyin.');
+        }
+      } catch (error) {
+        console.error('❌ Error in DCA transaction:', error);
+        alert('DCA transaction eklenirken hata oluştu: ' + error.message);
+      }
+      
+      return;
+    }
+    
+    // Regular mode: Create new investment
     const investmentData = {
       type: investmentType,
       name: investmentName,
@@ -404,6 +474,142 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
           </select>
         </div>
 
+        {/* DCA Mode Selection - Only show for new investments */}
+        {!investment && investmentType && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center mb-3">
+              <TrendingUp className="h-5 w-5 text-blue-600 mr-2" />
+              <h4 className="font-medium text-blue-900">Yatırım Modu</h4>
+            </div>
+            
+            <div className="space-y-3">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="dcaMode"
+                  checked={!dcaMode}
+                  onChange={() => {
+                    setDcaMode(false);
+                    setSelectedExistingInvestment(null);
+                  }}
+                  className="mr-3 text-blue-600"
+                />
+                <div>
+                  <span className="font-medium text-gray-900">Yeni Yatırım Oluştur</span>
+                  <p className="text-sm text-gray-600">Tamamen yeni bir yatırım kaydı oluştur</p>
+                </div>
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="dcaMode"
+                  checked={dcaMode}
+                  onChange={() => setDcaMode(true)}
+                  className="mr-3 text-blue-600"
+                />
+                <div>
+                  <span className="font-medium text-gray-900">Mevcut Yatırıma Ekle (DCA)</span>
+                  <p className="text-sm text-gray-600">Var olan yatırıma ekleme yaparak ortalama maliyeti hesapla</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* Existing Investment Selection for DCA */}
+        {dcaMode && investmentType && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center mb-3">
+              <Plus className="h-5 w-5 text-yellow-600 mr-2" />
+              <h4 className="font-medium text-yellow-900">Mevcut Yatırım Seç</h4>
+            </div>
+            
+            <select
+              value={selectedExistingInvestment?.id || ''}
+              onChange={(e) => {
+                const selected = state.investments.find(inv => inv.id === e.target.value);
+                setSelectedExistingInvestment(selected);
+                
+                // Auto-fill form data when existing investment is selected
+                if (selected) {
+                  const autoFillData = {
+                    name: selected.name,
+                    notes: `${selected.name} - Yeni alım`,
+                    purchaseDate: new Date().toISOString().split('T')[0]
+                  };
+                  
+                  // Type-specific auto-fill
+                  if (selected.type === 'fund') {
+                    autoFillData.fundCode = selected.fundCode || '';
+                    autoFillData.fundName = selected.fundName || selected.name;
+                    // Don't auto-fill currentPrice - user will set purchase price only
+                  } else if (selected.type === 'stock') {
+                    autoFillData.stockSymbol = selected.stockSymbol || '';
+                    autoFillData.stockName = selected.stockName || selected.name;
+                  } else if (selected.type === 'crypto') {
+                    autoFillData.cryptoSymbol = selected.cryptoSymbol || '';
+                    autoFillData.cryptoName = selected.cryptoName || selected.name;
+                  }
+                  
+                  setFormData(autoFillData);
+                  console.log('🔄 Auto-filled form data for DCA:', autoFillData);
+                }
+              }}
+              className="select-field"
+              required={dcaMode}
+            >
+              <option value="">Mevcut yatırımınızı seçin</option>
+              {state.investments
+                .filter(inv => inv.type === investmentType)
+                .map(inv => (
+                  <option key={inv.id} value={inv.id}>
+                    {inv.name} - {inv.currentValue ? `₺${inv.currentValue.toLocaleString('tr-TR')}` : 'Değer yok'}
+                  </option>
+                ))
+              }
+            </select>
+            
+            {selectedExistingInvestment && (
+              <div className="mt-3 p-3 bg-white rounded border">
+                <h5 className="font-medium text-gray-900 mb-2">Seçilen Yatırım Özeti:</h5>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">İsim:</span>
+                    <div className="font-medium">{selectedExistingInvestment.name}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Güncel Değer:</span>
+                    <div className="font-medium">
+                      {selectedExistingInvestment.currentValue ? 
+                        `₺${selectedExistingInvestment.currentValue.toLocaleString('tr-TR')}` : 
+                        'Değer yok'
+                      }
+                    </div>
+                  </div>
+                  {selectedExistingInvestment.transactions && selectedExistingInvestment.transactions.length > 0 && (
+                    <>
+                      <div>
+                        <span className="text-gray-600">Toplam İşlem:</span>
+                        <div className="font-medium">{selectedExistingInvestment.transactions.length} alım</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Ortalama Maliyet:</span>
+                        <div className="font-medium">
+                          {selectedExistingInvestment.averageCost ? 
+                            `₺${selectedExistingInvestment.averageCost.toLocaleString('tr-TR')}` : 
+                            'Hesaplanmamış'
+                          }
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Dynamic Fields */}
         {currentTypeConfig && (
           <div className="space-y-4">
@@ -411,11 +617,33 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
               {currentTypeConfig.name} Detayları
             </h3>
             
-            {currentTypeConfig.fields.map((field) => (
-              <div key={field.key}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {field.label} {field.required && '*'}
-                </label>
+            {currentTypeConfig.fields.map((field) => {
+              // In DCA mode, hide current price fields and modify labels
+              const isDCAMode = dcaMode && selectedExistingInvestment;
+              const isCurrentPriceField = field.key.includes('currentPrice') || field.key.includes('Current') || 
+                                        (field.key === 'currentValue' && isDCAMode);
+              
+              // Skip current price fields in DCA mode
+              if (isDCAMode && isCurrentPriceField) {
+                return null;
+              }
+              
+              // Modify labels for DCA mode
+              let fieldLabel = field.label;
+              if (isDCAMode) {
+                if (field.key.includes('purchasePrice') || field.key.includes('Purchase')) {
+                  fieldLabel = fieldLabel.replace('Alış', 'Yeni Alış').replace('Purchase', 'Yeni Alış');
+                }
+              }
+              
+              return (
+                <div key={field.key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {fieldLabel} {field.required && '*'}
+                    {isDCAMode && field.key.includes('purchasePrice') && (
+                      <span className="text-blue-600 text-xs ml-1">(DCA - Yeni alım fiyatı)</span>
+                    )}
+                  </label>
                 
                 {field.type === 'select' ? (
                   <select
@@ -453,7 +681,8 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
                   />
                 )}
               </div>
-            ))}
+              );
+            })}
 
             {/* Calculations Preview - DİREKT HESAPLAMA */}
             {investmentType && investmentTypes[investmentType] && (

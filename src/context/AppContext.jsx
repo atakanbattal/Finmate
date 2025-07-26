@@ -3,6 +3,7 @@ import { createTransaction, createInvestment, createGoal, createUser } from '../
 import goalIntegrationService from '../services/goalIntegrationService';
 import autoUpdateService, { UPDATE_FREQUENCIES } from '../services/autoUpdateService';
 import { updateInvestmentWithMarketData } from '../services/marketData';
+import { addTransactionToInvestment, migrateInvestmentToDCA, updateInvestmentDCAMetrics } from '../utils/calculations';
 
 const AppContext = createContext();
 
@@ -42,6 +43,9 @@ const ActionTypes = {
   ADD_INVESTMENT: 'ADD_INVESTMENT',
   UPDATE_INVESTMENT: 'UPDATE_INVESTMENT',
   DELETE_INVESTMENT: 'DELETE_INVESTMENT',
+  ADD_INVESTMENT_TRANSACTION: 'ADD_INVESTMENT_TRANSACTION',
+  MIGRATE_INVESTMENT_TO_DCA: 'MIGRATE_INVESTMENT_TO_DCA',
+  UPDATE_INVESTMENT_DCA_METRICS: 'UPDATE_INVESTMENT_DCA_METRICS',
   ADD_GOAL: 'ADD_GOAL',
   UPDATE_GOAL: 'UPDATE_GOAL',
   DELETE_GOAL: 'DELETE_GOAL',
@@ -99,6 +103,34 @@ function appReducer(state, action) {
       return {
         ...state,
         investments: state.investments.filter(i => i.id !== action.payload)
+      };
+    
+    case ActionTypes.ADD_INVESTMENT_TRANSACTION:
+      return {
+        ...state,
+        investments: state.investments.map(i => 
+          i.id === action.payload.investmentId 
+            ? addTransactionToInvestment(i, action.payload.transaction, action.payload.currentPricePerUnit)
+            : i
+        )
+      };
+    
+    case ActionTypes.MIGRATE_INVESTMENT_TO_DCA:
+      return {
+        ...state,
+        investments: state.investments.map(i => 
+          i.id === action.payload ? migrateInvestmentToDCA(i) : i
+        )
+      };
+    
+    case ActionTypes.UPDATE_INVESTMENT_DCA_METRICS:
+      return {
+        ...state,
+        investments: state.investments.map(i => 
+          i.id === action.payload.investmentId 
+            ? updateInvestmentDCAMetrics(i, action.payload.currentPricePerUnit)
+            : i
+        )
       };
     
     case ActionTypes.ADD_GOAL:
@@ -362,6 +394,22 @@ export function AppProvider({ children }) {
     
     deleteInvestment: (id) => 
       dispatch({ type: ActionTypes.DELETE_INVESTMENT, payload: id }),
+    
+    // DCA (Dollar Cost Averaging) methods
+    addInvestmentTransaction: (investmentId, transaction, currentPricePerUnit = 0) => 
+      dispatch({ 
+        type: ActionTypes.ADD_INVESTMENT_TRANSACTION, 
+        payload: { investmentId, transaction, currentPricePerUnit } 
+      }),
+    
+    migrateInvestmentToDCA: (investmentId) => 
+      dispatch({ type: ActionTypes.MIGRATE_INVESTMENT_TO_DCA, payload: investmentId }),
+    
+    updateInvestmentDCAMetrics: (investmentId, currentPricePerUnit) => 
+      dispatch({ 
+        type: ActionTypes.UPDATE_INVESTMENT_DCA_METRICS, 
+        payload: { investmentId, currentPricePerUnit } 
+      }),
     
     addGoal: (goal) => 
       dispatch({ type: ActionTypes.ADD_GOAL, payload: goal }),

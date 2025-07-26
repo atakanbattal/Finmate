@@ -1,20 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Calculator, Info, TrendingUp } from 'lucide-react';
-import AssetPicker from './AssetPicker';
+// AssetPicker kaldırıldı - Manuel giriş sistemi
 
 // Investment types with their specific fields and calculations
 export const investmentTypes = {
   'stock': {
     name: 'Hisse Senedi',
     fields: [
-      { key: 'stockPicker', label: 'Hisse Senedi', type: 'stockpicker', required: true },
-      { key: 'lotCount', label: 'Lot Adedi', type: 'number', required: true },
-      { key: 'pricePerLot', label: 'Alış Fiyatı (₺/lot)', type: 'number', step: '0.01', required: true },
-      { key: 'currentPricePerLot', label: 'Güncel Fiyat (₺/lot)', type: 'number', step: '0.01', placeholder: 'Manuel güncel fiyat girin' }
+      { key: 'stockName', label: 'Hisse Senedi Adı', type: 'text', required: true },
+      { key: 'stockSymbol', label: 'Hisse Kodu (Opsiyonel)', type: 'text', placeholder: 'THYAO, AKBNK vs.' },
+      { key: 'lots', label: 'Lot Adedi', type: 'number', step: '1', required: true },
+      { key: 'purchasePricePerLot', label: 'Alış Lot Fiyatı (₺)', type: 'number', step: '0.01', required: true },
+      { key: 'currentPricePerLot', label: 'Güncel Lot Fiyatı (₺)', type: 'number', step: '0.01', placeholder: 'Manuel giriniz' }
     ],
-    calculate: (data, purchaseDate, investmentAmount, marketData) => {
-      const lotCount = parseFloat(data.lotCount) || 0;
-      const pricePerLot = parseFloat(data.pricePerLot) || 0;
+    calculate: (data, purchaseDate, investmentAmount) => {
+      const lots = parseFloat(data.lots) || 0;
+      const purchasePricePerLot = parseFloat(data.purchasePricePerLot) || 0;
       const manualCurrentPrice = parseFloat(data.currentPricePerLot) || 0;
       
       // Seçili hisse senedi bilgisi
@@ -69,10 +70,11 @@ export const investmentTypes = {
   'crypto': {
     name: 'Kripto Para',
     fields: [
-      { key: 'cryptoPicker', label: 'Kripto Para', type: 'assetpicker', assetType: 'crypto', required: true },
+      { key: 'cryptoName', label: 'Kripto Para Adı', type: 'text', required: true },
+      { key: 'cryptoSymbol', label: 'Kripto Sembolü (Opsiyonel)', type: 'text', placeholder: 'BTC, ETH, ADA vs.' },
       { key: 'amount', label: 'Miktar', type: 'number', step: '0.00000001', required: true },
       { key: 'purchasePrice', label: 'Alış Fiyatı ($)', type: 'number', step: '0.01', required: true },
-      { key: 'currentPrice', label: 'Güncel Fiyat ($)', type: 'number', step: '0.01', placeholder: 'Otomatik güncellenecek' }
+      { key: 'currentPrice', label: 'Güncel Fiyat ($)', type: 'number', step: '0.01', placeholder: 'Manuel giriniz' }
     ],
     calculate: (data, purchaseDate, investmentAmount) => {
       const amount = parseFloat(data.amount) || 0;
@@ -102,10 +104,10 @@ export const investmentTypes = {
   'gold': {
     name: 'Altın',
     fields: [
-      { key: 'goldPicker', label: 'Altın Türü', type: 'assetpicker', assetType: 'gold', required: true },
+      { key: 'goldType', label: 'Altın Türü', type: 'text', required: true, placeholder: 'Çeyrek altın, Yarım altın, Tam altın vs.' },
       { key: 'weight', label: 'Ağırlık (gram)', type: 'number', step: '0.01', required: true },
       { key: 'purchasePrice', label: 'Alış Fiyatı (₺/gram)', type: 'number', step: '0.01', required: true },
-      { key: 'currentPrice', label: 'Güncel Fiyat (₺/gram)', type: 'number', step: '0.01', placeholder: 'Otomatik güncellenecek' }
+      { key: 'currentPrice', label: 'Güncel Fiyat (₺/gram)', type: 'number', step: '0.01', placeholder: 'Manuel giriniz' }
     ],
     calculate: (data, purchaseDate, investmentAmount) => {
       const weight = parseFloat(data.weight) || 0;
@@ -133,10 +135,11 @@ export const investmentTypes = {
   'fund': {
     name: 'Yatırım Fonu',
     fields: [
-      { key: 'fundPicker', label: 'Yatırım Fonu', type: 'assetpicker', assetType: 'fund', required: true },
+      { key: 'fundName', label: 'Yatırım Fonu Adı', type: 'text', required: true },
+      { key: 'fundCode', label: 'Fon Kodu (Opsiyonel)', type: 'text', placeholder: 'GPA, TGT, AFT vs.' },
       { key: 'units', label: 'Pay Adedi', type: 'number', step: '0.0001', required: true },
       { key: 'purchasePrice', label: 'Alış Fiyatı (₺)', type: 'number', step: '0.0001', required: true },
-      { key: 'currentPrice', label: 'Güncel Fiyat (₺)', type: 'number', step: '0.0001', placeholder: 'Otomatik güncellenecek' }
+      { key: 'currentPrice', label: 'Güncel Fiyat (₺)', type: 'number', step: '0.0001', placeholder: 'Manuel giriniz' }
     ],
     calculate: (data, purchaseDate, investmentAmount) => {
       const units = parseFloat(data.units) || 0;
@@ -482,85 +485,25 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
   const [investmentType, setInvestmentType] = useState(investment?.type || '');
   const [formData, setFormData] = useState(() => {
     if (investment) {
-      // Mevcut yatırımı düzenleme modu - Investment type'a göre TÜM alanları yükle
-      console.log('🔍 FORM DATA INITIALIZATION - Loading investment for editing:', investment);
-      console.log('🔍 Investment type:', investment.type);
+      // Mevcut yatırımı düzenleme modu - MANUEL GİRİŞ İÇİN BASİTLEŞTİRİLDİ
+      console.log('🔍 BASIT FORM DATA INITIALIZATION - Loading investment for editing:', investment);
       
-      // Investment type'a göre field tanımlarını al
-      const typeConfig = investmentTypes[investment.type];
-      console.log('🔍 Type config fields:', typeConfig?.fields);
+      // Tüm alanları direkt olarak investment objesinden yükle
+      const initialData = {};
       
-      // Temel alanları yükle
-      const initialData = {
-        name: investment.name || '',
-        notes: investment.notes || ''
-      };
-      
-      // Investment type'a göre özel alanları yükle
-      if (typeConfig && typeConfig.fields) {
-        typeConfig.fields.forEach(field => {
-          const fieldKey = field.key;
-          
-          // Investment objesinden değeri al
-          if (investment.hasOwnProperty(fieldKey)) {
-            if (field.type === 'number') {
-              initialData[fieldKey] = investment[fieldKey]?.toString() || '';
-            } else {
-              initialData[fieldKey] = investment[fieldKey] || '';
-            }
-            console.log(`✅ Loaded field ${fieldKey}:`, investment[fieldKey]);
+      // Investment objesinin tüm property'lerini kopyala
+      Object.keys(investment).forEach(key => {
+        if (key !== 'id' && key !== 'userId' && key !== 'createdAt' && key !== 'updatedAt') {
+          if (typeof investment[key] === 'number') {
+            initialData[key] = investment[key]?.toString() || '';
           } else {
-            // Özel durumlar için mapping
-            switch (fieldKey) {
-              case 'stockPicker':
-                if (investment.symbol) {
-                  initialData[fieldKey] = investment.symbol;
-                  console.log(`✅ Loaded stockPicker from symbol:`, investment.symbol);
-                }
-                break;
-              case 'fundPicker':
-                if (investment.fundCode) {
-                  initialData[fieldKey] = investment.fundCode;
-                  console.log(`✅ Loaded fundPicker from fundCode:`, investment.fundCode);
-                }
-                break;
-              case 'cryptoPicker':
-                if (investment.cryptoSymbol) {
-                  initialData[fieldKey] = investment.cryptoSymbol;
-                  console.log(`✅ Loaded cryptoPicker from cryptoSymbol:`, investment.cryptoSymbol);
-                }
-                break;
-              case 'goldPicker':
-                if (investment.goldType) {
-                  initialData[fieldKey] = investment.goldType;
-                  console.log(`✅ Loaded goldPicker from goldType:`, investment.goldType);
-                }
-                break;
-              case 'amount':
-                // Yatırım fonu için units kullan, diğerleri için amount
-                if (investment.type === 'fund' && investment.units) {
-                  initialData['units'] = investment.units?.toString() || '';
-                  console.log(`✅ Loaded units for fund:`, investment.units);
-                } else if (investment.amount) {
-                  initialData[fieldKey] = investment.amount?.toString() || '';
-                  console.log(`✅ Loaded amount:`, investment.amount);
-                }
-                break;
-              case 'currentValue':
-                if (investment.currentValue) {
-                  initialData[fieldKey] = investment.currentValue?.toString() || '';
-                  console.log(`✅ Loaded currentValue:`, investment.currentValue);
-                }
-                break;
-              default:
-                console.log(`⚠️ Field ${fieldKey} not found in investment object`);
-                break;
-            }
+            initialData[key] = investment[key] || '';
           }
-        });
-      }
+          console.log(`✅ Loaded ${key}:`, investment[key]);
+        }
+      });
       
-      console.log('✅ COMPLETE Form data initialized:', initialData);
+      console.log('✅ BASIT Form data initialized:', initialData);
       return initialData;
     }
     console.log('⚠️ No investment provided, returning empty form data');
@@ -570,83 +513,24 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
   // Investment prop'u değiştiğinde form data'yı yeniden yükle
   useEffect(() => {
     if (investment) {
-      console.log('🔄 USEEFFECT - Investment prop changed, reloading form data:', investment);
+      console.log('🔄 BASIT USEEFFECT - Investment prop changed, reloading form data:', investment);
       
-      // Investment type'a göre field tanımlarını al
-      const typeConfig = investmentTypes[investment.type];
-      console.log('🔄 USEEFFECT - Type config fields:', typeConfig?.fields);
+      // Tüm alanları direkt olarak investment objesinden yükle
+      const initialData = {};
       
-      // Temel alanları yükle
-      const initialData = {
-        name: investment.name || '',
-        notes: investment.notes || ''
-      };
-      
-      // Investment type'a göre özel alanları yükle
-      if (typeConfig && typeConfig.fields) {
-        typeConfig.fields.forEach(field => {
-          const fieldKey = field.key;
-          
-          // Investment objesinden değeri al
-          if (investment.hasOwnProperty(fieldKey)) {
-            if (field.type === 'number') {
-              initialData[fieldKey] = investment[fieldKey]?.toString() || '';
-            } else {
-              initialData[fieldKey] = investment[fieldKey] || '';
-            }
-            console.log(`🔄 USEEFFECT - Loaded field ${fieldKey}:`, investment[fieldKey]);
+      // Investment objesinin tüm property'lerini kopyala
+      Object.keys(investment).forEach(key => {
+        if (key !== 'id' && key !== 'userId' && key !== 'createdAt' && key !== 'updatedAt') {
+          if (typeof investment[key] === 'number') {
+            initialData[key] = investment[key]?.toString() || '';
           } else {
-            // Özel durumlar için mapping
-            switch (fieldKey) {
-              case 'stockPicker':
-                if (investment.symbol) {
-                  initialData[fieldKey] = investment.symbol;
-                  console.log(`🔄 USEEFFECT - Loaded stockPicker from symbol:`, investment.symbol);
-                }
-                break;
-              case 'fundPicker':
-                if (investment.fundCode) {
-                  initialData[fieldKey] = investment.fundCode;
-                  console.log(`🔄 USEEFFECT - Loaded fundPicker from fundCode:`, investment.fundCode);
-                }
-                break;
-              case 'cryptoPicker':
-                if (investment.cryptoSymbol) {
-                  initialData[fieldKey] = investment.cryptoSymbol;
-                  console.log(`🔄 USEEFFECT - Loaded cryptoPicker from cryptoSymbol:`, investment.cryptoSymbol);
-                }
-                break;
-              case 'goldPicker':
-                if (investment.goldType) {
-                  initialData[fieldKey] = investment.goldType;
-                  console.log(`🔄 USEEFFECT - Loaded goldPicker from goldType:`, investment.goldType);
-                }
-                break;
-              case 'amount':
-                // Yatırım fonu için units kullan, diğerleri için amount
-                if (investment.type === 'fund' && investment.units) {
-                  initialData['units'] = investment.units?.toString() || '';
-                  console.log(`🔄 USEEFFECT - Loaded units for fund:`, investment.units);
-                } else if (investment.amount) {
-                  initialData[fieldKey] = investment.amount?.toString() || '';
-                  console.log(`🔄 USEEFFECT - Loaded amount:`, investment.amount);
-                }
-                break;
-              case 'currentValue':
-                if (investment.currentValue) {
-                  initialData[fieldKey] = investment.currentValue?.toString() || '';
-                  console.log(`🔄 USEEFFECT - Loaded currentValue:`, investment.currentValue);
-                }
-                break;
-              default:
-                console.log(`🔄 USEEFFECT - Field ${fieldKey} not found in investment object`);
-                break;
-            }
+            initialData[key] = investment[key] || '';
           }
-        });
-      }
+          console.log(`🔄 USEEFFECT - Loaded ${key}:`, investment[key]);
+        }
+      });
       
-      console.log('✅ USEEFFECT - COMPLETE Form data reloaded:', initialData);
+      console.log('✅ BASIT USEEFFECT - Form data reloaded:', initialData);
       setFormData(initialData);
       setInvestmentType(investment.type);
     }
@@ -774,27 +658,25 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       }
     }
 
-    // Create investment name based on type and data
+    // Create investment name based on type and data - MANUEL GİRİŞ İÇİN BASİTLEŞTİRİLDİ
     let investmentName = formData.name;
     if (!investmentName) {
       if (investmentType === 'deposit') {
-        investmentName = `${typeConfig.name} - ₺${calculatedAmount.toLocaleString('tr-TR')}`;
+        const bankName = formData.bankName || 'Banka';
+        investmentName = `${bankName} Mevduat - ₺${calculatedAmount.toLocaleString('tr-TR')}`;
       } else if (investmentType === 'stock') {
-        const stockInfo = formData.stockPicker;
-        const stockName = stockInfo?.name || stockInfo?.symbol || 'Hisse Senedi';
-        investmentName = `${stockName} - ${formData.lotCount || 0} lot`;
+        const stockName = formData.stockName || 'Hisse Senedi';
+        investmentName = `${stockName} - ${formData.lots || 0} lot`;
       } else if (investmentType === 'fund') {
-        const fundInfo = formData.fundPicker;
-        const fundName = fundInfo?.name || fundInfo?.symbol || 'Yatırım Fonu';
+        const fundName = formData.fundName || 'Yatırım Fonu';
         investmentName = `${fundName} - ₺${calculatedAmount.toLocaleString('tr-TR')}`;
       } else if (investmentType === 'crypto') {
-        const cryptoInfo = formData.cryptoPicker;
-        const cryptoName = cryptoInfo?.name || cryptoInfo?.symbol || 'Kripto Para';
-        investmentName = `${cryptoName} - ${formData.amount || 0} ${cryptoInfo?.symbol || 'COIN'}`;
+        const cryptoName = formData.cryptoName || 'Kripto Para';
+        const cryptoSymbol = formData.cryptoSymbol || 'COIN';
+        investmentName = `${cryptoName} - ${formData.amount || 0} ${cryptoSymbol}`;
       } else if (investmentType === 'gold') {
-        const goldInfo = formData.goldPicker;
-        const goldName = goldInfo?.name || 'Altın';
-        investmentName = `${goldName} - ${formData.weight || 0} gram`;
+        const goldType = formData.goldType || 'Altın';
+        investmentName = `${goldType} - ${formData.weight || 0} gram`;
       } else {
         investmentName = typeConfig.name;
       }
@@ -854,42 +736,7 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
                   {field.label} {field.required && '*'}
                 </label>
                 
-                {field.type === 'stockpicker' ? (
-                  <AssetPicker
-                    assetType="stock"
-                    value={formData[field.key]}
-                    onChange={(stockData) => handleInputChange(field.key, stockData)}
-                    placeholder={field.placeholder || 'Hisse senedi seçin...'}
-                  />
-                ) : field.type === 'fundpicker' ? (
-                  <AssetPicker
-                    assetType="fund"
-                    value={formData[field.key]}
-                    onChange={(fundData) => handleInputChange(field.key, fundData)}
-                    placeholder={field.placeholder || 'Yatırım fonu seçin...'}
-                  />
-                ) : field.type === 'cryptopicker' ? (
-                  <AssetPicker
-                    assetType="crypto"
-                    value={formData[field.key]}
-                    onChange={(cryptoData) => handleInputChange(field.key, cryptoData)}
-                    placeholder={field.placeholder || 'Kripto para seçin...'}
-                  />
-                ) : field.type === 'goldpicker' ? (
-                  <AssetPicker
-                    assetType="gold"
-                    value={formData[field.key]}
-                    onChange={(goldData) => handleInputChange(field.key, goldData)}
-                    placeholder={field.placeholder || 'Altın varlığı seçin...'}
-                  />
-                ) : field.type === 'assetpicker' ? (
-                  <AssetPicker
-                    assetType={field.assetType}
-                    value={formData[field.key]}
-                    onChange={(assetData) => handleInputChange(field.key, assetData)}
-                    placeholder={field.placeholder}
-                  />
-                ) : field.type === 'select' ? (
+                {field.type === 'select' ? (
                   <select
                     value={formData[field.key] || ''}
                     onChange={(e) => handleInputChange(field.key, e.target.value)}

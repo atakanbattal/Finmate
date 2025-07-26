@@ -364,26 +364,34 @@ const Investments = () => {
                     
                     {/* Debug: Güncel değer durumu */}
                     {(() => {
-                      // Manuel güncel değer girilmiş mi kontrol et (string değerleri de kontrol et)
+                      // Manuel güncel değer girilmiş mi kontrol et - YENİ YAPI İÇİN DÜZELTİLDİ
                       const hasManualCurrentValue = 
-                        (investment.type === 'stock' && (parseFloat(investment.data?.currentPricePerLot) > 0 || parseFloat(investment.data?.currentPrice) > 0)) ||
-                        (investment.type === 'fund' && parseFloat(investment.data?.currentPrice) > 0) ||
-                        (investment.type === 'crypto' && parseFloat(investment.data?.currentPrice) > 0) ||
-                        (investment.type === 'gold' && parseFloat(investment.data?.currentPrice) > 0) ||
+                        (investment.type === 'stock' && (parseFloat(investment.currentPricePerLot) > 0 || parseFloat(investment.currentPrice) > 0)) ||
+                        (investment.type === 'fund' && parseFloat(investment.currentPrice) > 0) ||
+                        (investment.type === 'crypto' && parseFloat(investment.currentPrice) > 0) ||
+                        (investment.type === 'gold' && parseFloat(investment.currentPrice) > 0) ||
                         (investment.type === 'deposit') || // Mevduat için hesaplanır
-                        (investment.type === 'other' && parseFloat(investment.data?.currentValue) > 0);
+                        (investment.type === 'other' && parseFloat(investment.currentValue) > 0) ||
+                        // Genel kontrol: currentValue > amount ise manuel değer girilmiş demektir
+                        (parseFloat(investment.currentValue) > 0 && Math.abs(parseFloat(investment.currentValue) - parseFloat(investment.amount)) > 0.01);
                       
                       // Eğer manuel değer girilmemişse ve güncel değer yatırılan tutara eşitse uyarı göster
                       const shouldShowWarning = !hasManualCurrentValue && Math.abs(currentValue - totalInvested) < 0.01;
                       
-                      // Debug log ekle
-                      console.log('Investment debug:', {
+                      // Debug log ekle - YENİ YAPI İÇİN GÜNCELLENDİ
+                      console.log('💰 Investment debug:', {
+                        id: investment.id,
+                        name: investment.name,
                         type: investment.type,
+                        amount: investment.amount,
+                        currentValue: investment.currentValue,
+                        currentPrice: investment.currentPrice,
+                        units: investment.units,
                         hasManualCurrentValue,
-                        currentValue,
-                        totalInvested,
+                        calculatedCurrentValue: currentValue,
+                        calculatedTotalInvested: totalInvested,
                         shouldShowWarning,
-                        data: investment.data
+                        fullInvestment: investment
                       });
                       
                       return shouldShowWarning ? (

@@ -287,14 +287,22 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       }
     }
 
-    // Calculate correct investment amount based on type
+    // Calculate correct investment amount and current value based on type
     let calculatedAmount = parseFloat(formData.amount) || 0;
-    
-    // Her yatırım türü için doğru tutarı hesapla
+    let calculatedCurrentValue = parseFloat(formData.currentValue) || 0;
+  
+    // Her yatırım türü için doğru tutarı VE güncel değeri hesapla
     if (investmentTypes[investmentType] && investmentTypes[investmentType].calculate) {
       try {
         const calc = investmentTypes[investmentType].calculate(formData, null, calculatedAmount);
         calculatedAmount = calc.totalInvested || calculatedAmount;
+        calculatedCurrentValue = calc.currentValue || calculatedCurrentValue;
+        
+        console.log('💰 CALCULATION RESULTS:');
+        console.log('💰 totalInvested:', calc.totalInvested);
+        console.log('💰 currentValue:', calc.currentValue);
+        console.log('💰 units:', calc.units);
+        console.log('💰 extraInfo:', calc.extraInfo);
       } catch (error) {
         console.error(`Error calculating amount for ${investmentType}:`, error);
       }
@@ -328,7 +336,7 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       type: investmentType,
       name: investmentName,
       amount: calculatedAmount,
-      currentValue: parseFloat(formData.currentValue) || 0,
+      currentValue: calculatedCurrentValue,
       notes: formData.notes || '',
       purchaseDate: formData.purchaseDate || new Date().toISOString().split('T')[0],
       // Yatırım türüne özel alanları da ekle

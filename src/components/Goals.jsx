@@ -36,6 +36,9 @@ const Goals = () => {
   });
 
   const GoalModal = ({ goal, onClose }) => {
+    console.log('=== GOAL MODAL RENDER START ===');
+    console.log('Goal modal props:', { goal, onClose });
+    
     const [useCashAndInvestments, setUseCashAndInvestments] = useState(false);
     
     // Dashboard kartlarından AYNI değerleri kullan - shared calculation function ile (ERROR HANDLING)
@@ -172,7 +175,11 @@ const Goals = () => {
               {goal ? 'Hedefi Düzenle' : 'Yeni Hedef Ekle'}
             </h2>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={(e) => {
+              console.log('=== FORM ONSUBMIT TRIGGERED ===');
+              console.log('Form event:', e);
+              handleSubmit(e);
+            }} className="space-y-4">
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

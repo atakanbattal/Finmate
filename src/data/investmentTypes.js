@@ -700,7 +700,7 @@ export const investmentTypes = {
     }
   },
 
-  machinery: {
+  makine: {
     name: 'Makine',
     fields: [
       {
@@ -769,7 +769,7 @@ export const investmentTypes = {
     }
   },
 
-  equipment: {
+  ekipman: {
     name: 'Ekipman',
     fields: [
       {
@@ -851,7 +851,7 @@ export const investmentTypes = {
     }
   },
 
-  vehicle: {
+  arac: {
     name: 'Araç',
     fields: [
       {

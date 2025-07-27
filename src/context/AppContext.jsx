@@ -20,6 +20,7 @@ const initialState = {
   investments: [],
   goals: [],
   debts: [],
+  receivables: [],
   currentUser: 'default',
   activeModal: null,
   modalData: null,
@@ -64,6 +65,9 @@ const ActionTypes = {
   ADD_DEBT: 'ADD_DEBT',
   UPDATE_DEBT: 'UPDATE_DEBT',
   DELETE_DEBT: 'DELETE_DEBT',
+  ADD_RECEIVABLE: 'ADD_RECEIVABLE',
+  UPDATE_RECEIVABLE: 'UPDATE_RECEIVABLE',
+  DELETE_RECEIVABLE: 'DELETE_RECEIVABLE',
   SET_ACTIVE_MODAL: 'SET_ACTIVE_MODAL',
   CLOSE_MODAL: 'CLOSE_MODAL',
   LOAD_DATA: 'LOAD_DATA',
@@ -241,6 +245,26 @@ function appReducer(state, action) {
         debts: state.debts.filter(debt => debt.id !== action.payload)
       };
     
+    case ActionTypes.ADD_RECEIVABLE:
+      return {
+        ...state,
+        receivables: [...state.receivables, action.payload]
+      };
+    
+    case ActionTypes.UPDATE_RECEIVABLE:
+      return {
+        ...state,
+        receivables: state.receivables.map(receivable => 
+          receivable.id === action.payload.id ? action.payload : receivable
+        )
+      };
+    
+    case ActionTypes.DELETE_RECEIVABLE:
+      return {
+        ...state,
+        receivables: state.receivables.filter(receivable => receivable.id !== action.payload)
+      };
+    
     case ActionTypes.SET_ACTIVE_MODAL:
       return {
         ...state,
@@ -289,6 +313,7 @@ export function AppProvider({ children }) {
           investments: parsedData.investments || [],
           goals: parsedData.goals || [],
           debts: parsedData.debts || [],
+          receivables: parsedData.receivables || [], // EKSIK OLAN ALAN EKLENDİ
           users: parsedData.users || initialState.users,
           currentUser: parsedData.currentUser || initialState.currentUser,
           activeModal: null, // Modal state'i localStorage'dan yükleme
@@ -318,6 +343,8 @@ export function AppProvider({ children }) {
           transactions: state.transactions,
           investments: state.investments,
           goals: state.goals,
+          debts: state.debts, // EKSIK OLAN ALAN EKLENDI
+          receivables: state.receivables, // EKSIK OLAN ALAN EKLENDI
           users: state.users,
           currentUser: state.currentUser,
           settings: state.settings,
@@ -332,7 +359,7 @@ export function AppProvider({ children }) {
     }, 500); // 500ms debounce
     
     return () => clearTimeout(timeoutId);
-  }, [state.transactions, state.investments, state.goals, state.users, state.currentUser, state.settings]);
+  }, [state.transactions, state.investments, state.goals, state.debts, state.receivables, state.users, state.currentUser, state.settings]);
 
   // Auto-update goals when transactions change
   useEffect(() => {
@@ -382,6 +409,50 @@ export function AppProvider({ children }) {
       autoUpdateService.stop();
     };
   }, []);
+
+  // Migration: Ensure all debts and receivables have remainingAmount field
+  useEffect(() => {
+    let needsUpdate = false;
+    
+    // Check and fix debts
+    const updatedDebts = state.debts.map(debt => {
+      if (debt.remainingAmount === undefined || debt.remainingAmount === null) {
+        console.log('🔧 Migrating debt:', debt.name, 'calculating remainingAmount');
+        needsUpdate = true;
+        return {
+          ...debt,
+          remainingAmount: (debt.totalAmount || 0) - (debt.paidAmount || 0)
+        };
+      }
+      return debt;
+    });
+    
+    // Check and fix receivables
+    const updatedReceivables = state.receivables.map(receivable => {
+      if (receivable.remainingAmount === undefined || receivable.remainingAmount === null) {
+        console.log('🔧 Migrating receivable:', receivable.name, 'calculating remainingAmount');
+        needsUpdate = true;
+        return {
+          ...receivable,
+          remainingAmount: receivable.totalAmount || 0 // Default to total amount
+        };
+      }
+      return receivable;
+    });
+    
+    // Update state if migration is needed
+    if (needsUpdate) {
+      console.log('📊 Dashboard kartları için migration yapılıyor...');
+      dispatch({ 
+        type: ActionTypes.LOAD_DATA, 
+        payload: {
+          ...state,
+          debts: updatedDebts,
+          receivables: updatedReceivables
+        }
+      });
+    }
+  }, [state.debts.length, state.receivables.length]); // Only run when items are added/removed
 
   // Calculate net cash flow and update goals automatically
   const updateGoalsWithCashFlow = () => {
@@ -492,6 +563,16 @@ export function AppProvider({ children }) {
     
     deleteDebt: (id) => 
       dispatch({ type: ActionTypes.DELETE_DEBT, payload: id }),
+
+    // Alacak yönetimi metodları
+    addReceivable: (receivable) => 
+      dispatch({ type: ActionTypes.ADD_RECEIVABLE, payload: receivable }),
+    
+    updateReceivable: (receivable) => 
+      dispatch({ type: ActionTypes.UPDATE_RECEIVABLE, payload: receivable }),
+    
+    deleteReceivable: (id) => 
+      dispatch({ type: ActionTypes.DELETE_RECEIVABLE, payload: id }),
 
     // Modal yönetimi metodları
     setActiveModal: (modalType, data = null) => 

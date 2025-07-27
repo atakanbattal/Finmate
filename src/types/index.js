@@ -118,6 +118,46 @@ export const createUser = (data = {}) => ({
   createdAt: data.createdAt || new Date().toISOString()
 });
 
+// Default data structure for a debt
+export const createDebt = (data = {}) => ({
+  id: data.id || crypto.randomUUID(),
+  name: data.name || '',
+  description: data.description || '',
+  totalAmount: data.totalAmount || 0,
+  remainingAmount: data.remainingAmount || data.totalAmount || 0,
+  interestRate: data.interestRate || 0,
+  monthlyPayment: data.monthlyPayment || 0,
+  dueDate: data.dueDate || '',
+  startDate: data.startDate || new Date().toISOString().split('T')[0],
+  creditor: data.creditor || '', // Alacaklı (banka, kurum vs.)
+  debtType: data.debtType || 'PERSONAL', // 'CREDIT_CARD', 'MORTGAGE', 'PERSONAL', 'AUTO', 'OTHER'
+  userId: data.userId || 'default',
+  isOverdue: data.isOverdue || false,
+  notes: data.notes || '',
+  createdAt: data.createdAt || new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
+
+// Default data structure for a receivable (alacak)
+export const createReceivable = (data = {}) => ({
+  id: data.id || crypto.randomUUID(),
+  name: data.name || '',
+  description: data.description || '',
+  totalAmount: data.totalAmount || 0,
+  remainingAmount: data.remainingAmount || data.totalAmount || 0,
+  interestRate: data.interestRate || 0,
+  expectedPayment: data.expectedPayment || 0, // Beklenen aylık ödeme
+  dueDate: data.dueDate || '',
+  startDate: data.startDate || new Date().toISOString().split('T')[0],
+  debtor: data.debtor || '', // Borçlu (kişi, kurum vs.)
+  receivableType: data.receivableType || 'PERSONAL', // 'LOAN', 'RENT', 'PERSONAL', 'BUSINESS', 'OTHER'
+  userId: data.userId || 'default',
+  isOverdue: data.isOverdue || false,
+  notes: data.notes || '',
+  createdAt: data.createdAt || new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
+
 export const GOAL_CATEGORIES = {
   SAVINGS: 'Birikim',
   INVESTMENT: 'Yatırım',

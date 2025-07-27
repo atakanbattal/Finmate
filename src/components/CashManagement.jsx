@@ -41,12 +41,17 @@ const DebtModal = ({ debt, onClose, onSave }) => {
       return;
     }
 
+    const totalAmount = parseFloat(formData.totalAmount) || 0;
+    const paidAmount = parseFloat(formData.paidAmount) || 0;
+    const remainingAmount = totalAmount - paidAmount;
+
     const debtData = {
       id: debt?.id || `debt-${Date.now()}`,
       name: formData.name,
       creditor: formData.creditor,
-      totalAmount: parseFloat(formData.totalAmount) || 0,
-      paidAmount: parseFloat(formData.paidAmount) || 0,
+      totalAmount: totalAmount,
+      paidAmount: paidAmount,
+      remainingAmount: remainingAmount, // KRİTİK: Dashboard kartları için gerekli
       interestRate: parseFloat(formData.interestRate) || 0,
       monthlyPayment: parseFloat(formData.monthlyPayment) || 0,
       dueDate: formData.dueDate || null,
@@ -54,6 +59,13 @@ const DebtModal = ({ debt, onClose, onSave }) => {
       createdAt: debt?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+
+    console.log('💳 Borç kaydediliyor:', {
+      totalAmount,
+      paidAmount,
+      remainingAmount,
+      name: formData.name
+    });
 
     onSave(debtData);
   };
@@ -211,6 +223,219 @@ const DebtModal = ({ debt, onClose, onSave }) => {
   );
 };
 
+// ReceivableModal Component
+const ReceivableModal = ({ receivable, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: receivable?.name || '',
+    description: receivable?.description || '',
+    totalAmount: receivable?.totalAmount || '',
+    remainingAmount: receivable?.remainingAmount || receivable?.totalAmount || '',
+    interestRate: receivable?.interestRate || '',
+    expectedPayment: receivable?.expectedPayment || '',
+    dueDate: receivable?.dueDate || '',
+    debtor: receivable?.debtor || '',
+    receivableType: receivable?.receivableType || 'PERSONAL',
+    notes: receivable?.notes || ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.totalAmount) {
+      alert('Lütfen alacak adı ve tutarını giriniz');
+      return;
+    }
+
+    const totalAmount = parseFloat(formData.totalAmount) || 0;
+    const remainingAmount = parseFloat(formData.remainingAmount) || totalAmount; // Varsayılan: toplam tutar
+
+    const receivableData = {
+      ...formData,
+      totalAmount: totalAmount,
+      remainingAmount: remainingAmount, // KRİTİK: Dashboard kartları için gerekli
+      interestRate: parseFloat(formData.interestRate) || 0,
+      expectedPayment: parseFloat(formData.expectedPayment) || 0,
+      id: receivable?.id || crypto.randomUUID(),
+      userId: 'default',
+      createdAt: receivable?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('💰 Alacak kaydediliyor:', {
+      totalAmount,
+      remainingAmount,
+      name: formData.name
+    });
+
+    onSave(receivableData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {receivable ? 'Alacak Düzenle' : 'Alacak Ekle'}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Alacak Adı *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Kişisel borç, kira alacağı, vb."
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Toplam Tutar *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.totalAmount}
+                  onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kalan Tutar
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.remainingAmount}
+                  onChange={(e) => setFormData({ ...formData, remainingAmount: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Faiz Oranı (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.interestRate}
+                  onChange={(e) => setFormData({ ...formData, interestRate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Beklenen Aylık Ödeme
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.expectedPayment}
+                  onChange={(e) => setFormData({ ...formData, expectedPayment: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Vade Tarihi
+              </label>
+              <input
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Borçlu
+              </label>
+              <input
+                type="text"
+                value={formData.debtor}
+                onChange={(e) => setFormData({ ...formData, debtor: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Borçlu kişi/kurum"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Alacak Türü
+              </label>
+              <select
+                value={formData.receivableType}
+                onChange={(e) => setFormData({ ...formData, receivableType: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="PERSONAL">Kişisel</option>
+                <option value="LOAN">Borç Verme</option>
+                <option value="RENT">Kira Alacağı</option>
+                <option value="BUSINESS">İş Alacağı</option>
+                <option value="OTHER">Diğer</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notlar
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                rows={3}
+                placeholder="Alacak hakkında notlar"
+              />
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
+              >
+                {receivable ? 'Güncelle' : 'Ekle'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CashManagement = () => {
   const { state, actions } = useApp();
   const { transactions = [], users = [] } = state;
@@ -220,6 +445,8 @@ const CashManagement = () => {
   const [showProjection, setShowProjection] = useState(true);
   const [showDebtModal, setShowDebtModal] = useState(false);
   const [editingDebt, setEditingDebt] = useState(null);
+  const [showReceivableModal, setShowReceivableModal] = useState(false);
+  const [editingReceivable, setEditingReceivable] = useState(null);
 
   // Removed - using direct month/year selection now
 
@@ -280,19 +507,20 @@ const CashManagement = () => {
       green: 'bg-green-50 text-green-700 border-green-200',
       red: 'bg-red-50 text-red-700 border-red-200',
       purple: 'bg-purple-50 text-purple-700 border-purple-200',
-      orange: 'bg-orange-50 text-orange-700 border-orange-200'
+      orange: 'bg-orange-50 text-orange-700 border-orange-200',
+      teal: 'bg-teal-50 text-teal-700 border-teal-200'
     };
 
     return (
-      <div className={`p-6 rounded-lg border-2 ${colorClasses[color]}`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium opacity-75">{title}</p>
-            <p className="text-2xl font-bold mt-1">
+      <div className={`p-3 rounded-lg border-2 h-20 flex items-center ${colorClasses[color]}`}>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex-1 min-w-0 pr-2">
+            <p className="text-xs font-medium opacity-75 whitespace-nowrap">{title}</p>
+            <p className="text-sm font-bold mt-1 truncate">
               {formatCurrency(value)}
             </p>
           </div>
-          <Icon className="h-8 w-8 opacity-75" />
+          <Icon className="h-5 w-5 opacity-75 flex-shrink-0" />
         </div>
       </div>
     );
@@ -355,7 +583,7 @@ const CashManagement = () => {
 
 
       {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         <StatCard
           title="Toplam Servet"
           value={cashData.totalWealth}
@@ -375,6 +603,12 @@ const CashManagement = () => {
           color="blue"
         />
         <StatCard
+          title="Alacaklar"
+          value={cashData.totalReceivables || 0}
+          icon={TrendingUp}
+          color="teal"
+        />
+        <StatCard
           title="Net Nakit Akışı"
           value={cashData.netCashFlow}
           icon={cashData.netCashFlow > 0 ? TrendingUp : TrendingDown}
@@ -383,7 +617,7 @@ const CashManagement = () => {
         <div className="relative">
           <StatCard
             title="Kalan Borç"
-            value={debtsSummary.remainingDebt}
+            value={cashData.totalDebts || 0}
             icon={CreditCard}
             color="orange"
           />
@@ -586,52 +820,7 @@ const CashManagement = () => {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <button 
-            onClick={() => actions.setActiveModal('addTransaction', { type: 'income' })}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors"
-          >
-            <Plus className="h-5 w-5 text-green-600 mr-2" />
-            <span className="text-green-700 font-medium">Gelir Ekle</span>
-          </button>
-          
-          <button 
-            onClick={() => actions.setActiveModal('addTransaction', { type: 'expense' })}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-400 hover:bg-red-50 transition-colors"
-          >
-            <Minus className="h-5 w-5 text-red-600 mr-2" />
-            <span className="text-red-700 font-medium">Gider Ekle</span>
-          </button>
-          
-          <button 
-            onClick={() => actions.setActiveModal('addInvestment')}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors"
-          >
-            <TrendingUp className="h-5 w-5 text-blue-600 mr-2" />
-            <span className="text-blue-700 font-medium">Yatırım Ekle</span>
-          </button>
-          
-          <button 
-            onClick={() => actions.setActiveModal('addGoal')}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-colors"
-          >
-            <Target className="h-5 w-5 text-purple-600 mr-2" />
-            <span className="text-purple-700 font-medium">Hedef Ekle</span>
-          </button>
-          
-          <button 
-            onClick={() => setShowDebtModal(true)}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-colors"
-          >
-            <CreditCard className="h-5 w-5 text-orange-600 mr-2" />
-            <span className="text-orange-700 font-medium">Borç Ekle</span>
-          </button>
-        </div>
-      </div>
+
 
       {/* Debts Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -768,6 +957,146 @@ const CashManagement = () => {
             }
             setShowDebtModal(false);
             setEditingDebt(null);
+          }}
+        />
+      )}
+
+      {/* Receivables Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Alacaklar</h2>
+          <button
+            onClick={() => setShowReceivableModal(true)}
+            className="btn-primary"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Alacak Ekle
+          </button>
+        </div>
+        
+        {state.receivables && state.receivables.length > 0 ? (
+          <div className="space-y-3">
+            {state.receivables.map(receivable => {
+              const remainingAmount = receivable.remainingAmount || receivable.totalAmount;
+              const progress = ((receivable.totalAmount - remainingAmount) / receivable.totalAmount) * 100;
+              const isOverdue = receivable.dueDate && new Date(receivable.dueDate) < new Date();
+              
+              return (
+                <div key={receivable.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      <TrendingUp className="h-5 w-5 text-teal-600 mr-2" />
+                      <div>
+                        <h3 className="font-medium text-gray-900">{receivable.name}</h3>
+                        <p className="text-sm text-gray-500">{receivable.debtor || 'Borçlu belirtilmemiş'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          setEditingReceivable(receivable);
+                          setShowReceivableModal(true);
+                        }}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Düzenle"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Bu alacağı silmek istediğinizden emin misiniz?')) {
+                            actions.deleteReceivable(receivable.id);
+                          }
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Sil"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Toplam Alacak</p>
+                      <p className="font-semibold text-gray-900">{formatCurrency(receivable.totalAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Tahsil Edilen</p>
+                      <p className="font-semibold text-green-600">{formatCurrency((receivable.totalAmount || 0) - remainingAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Kalan</p>
+                      <p className="font-semibold text-teal-600">{formatCurrency(remainingAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Faiz Oranı</p>
+                      <p className="font-semibold text-gray-900">%{receivable.interestRate || 0}</p>
+                    </div>
+                  </div>
+                  
+                  {receivable.dueDate && (
+                    <div className="flex items-center text-sm text-gray-600 mb-2">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>Vade: {new Date(receivable.dueDate).toLocaleDateString('tr-TR')}</span>
+                      {new Date(receivable.dueDate) < new Date() && (
+                        <AlertTriangle className="h-4 w-4 ml-2 text-red-500" />
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-teal-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(progress, 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>%{progress.toFixed(1)} tahsil edildi</span>
+                    <span>{receivable.monthlyPayment ? `Aylık: ${formatCurrency(receivable.monthlyPayment)}` : ''}</span>
+                  </div>
+                  
+                  {receivable.notes && (
+                    <p className="text-sm text-gray-600 mt-2 italic">{receivable.notes}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-2">Henüz alacak kaydı bulunmuyor</p>
+            <p className="text-sm text-gray-400 mb-4">
+              Alacaklarınızı ekleyerek takip etmeye başlayın
+            </p>
+            <button
+              onClick={() => setShowReceivableModal(true)}
+              className="btn-primary"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              İlk Alacağınızı Ekleyin
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Receivable Modal */}
+      {showReceivableModal && (
+        <ReceivableModal
+          receivable={editingReceivable}
+          onClose={() => {
+            setShowReceivableModal(false);
+            setEditingReceivable(null);
+          }}
+          onSave={(receivableData) => {
+            if (editingReceivable) {
+              actions.updateReceivable({ ...editingReceivable, ...receivableData });
+            } else {
+              actions.addReceivable(receivableData);
+            }
+            setShowReceivableModal(false);
+            setEditingReceivable(null);
           }}
         />
       )}

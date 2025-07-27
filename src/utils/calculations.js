@@ -404,8 +404,21 @@ export const calculateCashManagementData = (state, investmentTypes, selectedMont
   
   const availableCash = Math.max(0, allTimeIncome - allTimeExpenses - totalInvestmentCost);
   
-  // Total wealth = available cash + current investment value
-  const totalWealth = availableCash + totalInvestmentValue;
+  // Calculate total debts (remaining amounts)
+  const totalDebts = (state.debts || []).reduce((sum, debt) => {
+    const remainingAmount = parseFloat(debt.remainingAmount) || 0;
+    return sum + remainingAmount;
+  }, 0);
+  
+  // Calculate total receivables (remaining amounts)
+  const totalReceivables = (state.receivables || []).reduce((sum, receivable) => {
+    const remainingAmount = parseFloat(receivable.remainingAmount) || 0;
+    return sum + remainingAmount;
+  }, 0);
+  
+  // DOĞRU TOPLAM SERVET HESAPLAMASI:
+  // Toplam Servet = (Mevcut Nakit + Yatırım Değeri + Alacaklar) - Borçlar
+  const totalWealth = (availableCash + totalInvestmentValue + totalReceivables) - totalDebts;
   
   // Calculate regular income/expenses for projection - GÜVENLI HESAPLAMA
   const regularIncome = filteredTransactions
@@ -426,7 +439,9 @@ export const calculateCashManagementData = (state, investmentTypes, selectedMont
     totalInvestmentValue,
     totalInvestmentCost,
     investmentGainLoss,
-    totalWealth, // This is the "Toplam Servet" card value
+    totalWealth, // This is the "Toplam Servet" card value (now includes debts and receivables)
+    totalDebts, // Toplam kalan borç
+    totalReceivables, // Toplam kalan alacak
     regularIncome,
     regularExpenses,
     monthlyNetRegular,

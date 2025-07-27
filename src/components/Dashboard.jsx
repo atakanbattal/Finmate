@@ -11,7 +11,7 @@ import { getTransactionsWithRecurring } from '../utils/calculations';
 
 const Dashboard = () => {
   const { state, actions } = useApp();
-  const { transactions = [], users = [], goals = [], settings = {} } = state;
+  const { transactions = [], users = [], goals = [], settings = {}, debts = [], receivables = [], investments = [] } = state;
   const [selectedPerson, setSelectedPerson] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -60,6 +60,54 @@ const Dashboard = () => {
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   const netCashFlow = totalIncome - totalExpenses;
+
+  // BORÇ VE ALACAK HESAPLAMALARI - KRİTİK FİX
+  // Toplam borçlar (kalan tutar)
+  const totalDebts = debts.reduce((sum, debt) => {
+    const remainingAmount = parseFloat(debt.remainingAmount) || (parseFloat(debt.totalAmount || 0) - parseFloat(debt.paidAmount || 0));
+    return sum + remainingAmount;
+  }, 0);
+
+  // Toplam alacaklar (kalan tutar)
+  const totalReceivables = receivables.reduce((sum, receivable) => {
+    const remainingAmount = parseFloat(receivable.remainingAmount) || parseFloat(receivable.totalAmount || 0);
+    return sum + remainingAmount;
+  }, 0);
+
+  // Yatırım değeri hesaplaması
+  const totalInvestmentValue = investments.reduce((sum, inv) => {
+    return sum + (parseFloat(inv.currentValue) || 0);
+  }, 0);
+
+  const totalInvestmentCost = investments.reduce((sum, inv) => {
+    return sum + (parseFloat(inv.amount) || 0);
+  }, 0);
+
+  // Tüm zamanlar için mevcut nakit hesaplaması
+  const allTimeIncome = filteredTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const allTimeExpenses = filteredTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const availableCash = Math.max(0, allTimeIncome - allTimeExpenses - totalInvestmentCost);
+
+  // TOPLAM SERVET HESAPLAMASI - KULLANICININ İSTEDİĞİ FORMÜL
+  // Toplam Servet = (Yatırım Değeri + Mevcut Nakit + Alacaklar) - Kalan Borç
+  const totalAssets = totalInvestmentValue + availableCash + totalReceivables; // Toplam Varlıklar
+  const totalWealth = totalAssets - totalDebts; // Toplam Servet = Varlıklar - Borçlar
+
+  console.log('🎯 Dashboard Hesaplamaları:', {
+    availableCash,
+    totalDebts,
+    totalReceivables,
+    totalInvestmentValue,
+    totalWealth,
+    debtsCount: debts.length,
+    receivablesCount: receivables.length
+  });
 
   // Form işlemleri
   const handleShowForm = (type) => {
@@ -198,12 +246,54 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Finansal Özet */}
+      {/* ANA FİNANSAL KARTLAR - KULLANICININ GÖRDÜĞÜ KARTLAR */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Mevcut Nakit */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Mevcut Nakit</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">
+                {formatCurrency(availableCash)}
+              </p>
+            </div>
+            <DollarSign className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+
+        {/* Kalan Borç */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Kalan Borç</p>
+              <p className="text-2xl font-bold text-red-600 mt-2">
+                {formatCurrency(totalDebts)}
+              </p>
+            </div>
+            <TrendingDown className="h-8 w-8 text-red-600" />
+          </div>
+        </div>
+
+        {/* Toplam Servet */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Toplam Servet</p>
+              <p className={`text-2xl font-bold mt-2 ${totalWealth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(totalWealth)}
+              </p>
+            </div>
+            <TrendingUp className={`h-8 w-8 ${totalWealth >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+          </div>
+        </div>
+      </div>
+
+      {/* AYLIK FİNANSAL ÖZET */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Gelir</p>
+              <p className="text-sm font-medium text-gray-600">Aylık Gelir</p>
               <p className="text-2xl font-bold text-green-600 mt-2">
                 {formatCurrency(totalIncome)}
               </p>
@@ -215,7 +305,7 @@ const Dashboard = () => {
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Toplam Gider</p>
+              <p className="text-sm font-medium text-gray-600">Aylık Gider</p>
               <p className="text-2xl font-bold text-red-600 mt-2">
                 {formatCurrency(totalExpenses)}
               </p>

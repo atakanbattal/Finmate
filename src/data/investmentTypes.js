@@ -700,7 +700,7 @@ export const investmentTypes = {
     }
   },
 
-  makine: {
+  Makine: {
     name: 'Makine',
     fields: [
       {
@@ -769,7 +769,7 @@ export const investmentTypes = {
     }
   },
 
-  ekipman: {
+  Ekipman: {
     name: 'Ekipman',
     fields: [
       {
@@ -851,7 +851,7 @@ export const investmentTypes = {
     }
   },
 
-  arac: {
+  Araç: {
     name: 'Araç',
     fields: [
       {
@@ -941,6 +941,321 @@ export const investmentTypes = {
         currentValue: currentValue,
         units: '1 araç',
         extraInfo: currentValue === purchasePrice ? 'Güncel değer girilmemiş (amortisman hesaplanmamış)' : null
+      };
+    }
+  },
+
+  Sanat: {
+    name: 'Sanat Eseri',
+    fields: [
+      {
+        key: 'artworkName',
+        label: 'Eser Adı',
+        type: 'text',
+        required: true,
+        placeholder: 'Örn: Tablo, Heykel, Antika'
+      },
+      {
+        key: 'artist',
+        label: 'Sanatçı',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Osman Hamdi Bey, Bedri Rahmi'
+      },
+      {
+        key: 'category',
+        label: 'Kategori',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Yağlıboya, Heykel, Antika'
+      },
+      {
+        key: 'year',
+        label: 'Yapım Yılı',
+        type: 'number',
+        required: false,
+        placeholder: '1950',
+        min: '1000',
+        max: '2030'
+      },
+      {
+        key: 'purchasePrice',
+        label: 'Alış Fiyatı (TL)',
+        type: 'number',
+        required: true,
+        placeholder: '0.00',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'currentValue',
+        label: 'Güncel Değer (TL)',
+        type: 'number',
+        required: false,
+        placeholder: 'Tahmini güncel değer',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'purchaseDate',
+        label: 'Satın Alma Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'notes',
+        label: 'Notlar',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Boyutlar, durum, sertifika bilgileri vs.'
+      }
+    ],
+    calculate: (formData) => {
+      const purchasePrice = parseFloat(formData.purchasePrice) || 0;
+      const currentValue = parseFloat(formData.currentValue) || purchasePrice;
+      
+      return {
+        totalInvested: purchasePrice,
+        currentValue: currentValue,
+        units: '1 eser',
+        extraInfo: currentValue === purchasePrice ? 'Güncel değer girilmemiş' : null
+      };
+    }
+  },
+
+  Koleksiyon: {
+    name: 'Koleksiyon',
+    fields: [
+      {
+        key: 'collectionName',
+        label: 'Koleksiyon Adı',
+        type: 'text',
+        required: true,
+        placeholder: 'Örn: Pul, Para, Kart, Oyuncak'
+      },
+      {
+        key: 'category',
+        label: 'Kategori',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Spor Kartı, Antika Para, Pul'
+      },
+      {
+        key: 'quantity',
+        label: 'Adet',
+        type: 'number',
+        required: true,
+        placeholder: '1',
+        min: '1',
+        step: '1'
+      },
+      {
+        key: 'purchasePrice',
+        label: 'Alış Fiyatı (Toplam)',
+        type: 'number',
+        required: true,
+        placeholder: '0.00',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'currentValue',
+        label: 'Güncel Değer (Toplam)',
+        type: 'number',
+        required: false,
+        placeholder: 'Tahmini güncel değer',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'purchaseDate',
+        label: 'Satın Alma Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'notes',
+        label: 'Notlar',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Koleksiyon detayları, nadir parçalar vs.'
+      }
+    ],
+    calculate: (formData) => {
+      const purchasePrice = parseFloat(formData.purchasePrice) || 0;
+      const currentValue = parseFloat(formData.currentValue) || purchasePrice;
+      const quantity = parseFloat(formData.quantity) || 1;
+      
+      return {
+        totalInvested: purchasePrice,
+        currentValue: currentValue,
+        units: `${quantity} adet`,
+        extraInfo: currentValue === purchasePrice ? 'Güncel değer girilmemiş' : null
+      };
+    }
+  },
+
+  Tarım: {
+    name: 'Tarım Yatırımı',
+    fields: [
+      {
+        key: 'farmName',
+        label: 'Yatırım Adı',
+        type: 'text',
+        required: true,
+        placeholder: 'Örn: Zeytinlik, Bağ, Sera'
+      },
+      {
+        key: 'location',
+        label: 'Konum',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Aydın, İzmir, Antalya'
+      },
+      {
+        key: 'area',
+        label: 'Alan (Dekar)',
+        type: 'number',
+        required: false,
+        placeholder: '0',
+        min: '0',
+        step: '0.1'
+      },
+      {
+        key: 'cropType',
+        label: 'Ürün Türü',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Zeytin, Üzüm, Domates'
+      },
+      {
+        key: 'purchasePrice',
+        label: 'Alış Fiyatı (TL)',
+        type: 'number',
+        required: true,
+        placeholder: '0.00',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'currentValue',
+        label: 'Güncel Değer (TL)',
+        type: 'number',
+        required: false,
+        placeholder: 'Tahmini güncel değer',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'annualIncome',
+        label: 'Yıllık Gelir (TL)',
+        type: 'number',
+        required: false,
+        placeholder: 'Yıllık ortalama gelir',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'purchaseDate',
+        label: 'Satın Alma Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'notes',
+        label: 'Notlar',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Toprak kalitesi, sulama durumu, verimlilik vs.'
+      }
+    ],
+    calculate: (formData) => {
+      const purchasePrice = parseFloat(formData.purchasePrice) || 0;
+      const currentValue = parseFloat(formData.currentValue) || purchasePrice;
+      const area = parseFloat(formData.area) || 0;
+      
+      return {
+        totalInvested: purchasePrice,
+        currentValue: currentValue,
+        units: area > 0 ? `${area} dekar` : '1 yatırım',
+        extraInfo: currentValue === purchasePrice ? 'Güncel değer girilmemiş' : null
+      };
+    }
+  },
+
+  Eğitim: {
+    name: 'Eğitim Yatırımı',
+    fields: [
+      {
+        key: 'educationName',
+        label: 'Eğitim Adı',
+        type: 'text',
+        required: true,
+        placeholder: 'Örn: MBA, Sertifika Programı, Kurs'
+      },
+      {
+        key: 'institution',
+        label: 'Kurum',
+        type: 'text',
+        required: false,
+        placeholder: 'Örn: Boğaziçi Üniversitesi, Coursera'
+      },
+      {
+        key: 'duration',
+        label: 'Süre (Ay)',
+        type: 'number',
+        required: false,
+        placeholder: '12',
+        min: '1',
+        step: '1'
+      },
+      {
+        key: 'cost',
+        label: 'Maliyet (TL)',
+        type: 'number',
+        required: true,
+        placeholder: '0.00',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'expectedReturn',
+        label: 'Beklenen Getiri (TL)',
+        type: 'number',
+        required: false,
+        placeholder: 'Maaş artışı, yeni fırsatlar',
+        min: '0',
+        step: '0.01'
+      },
+      {
+        key: 'startDate',
+        label: 'Başlangıç Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'endDate',
+        label: 'Bitiş Tarihi',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'notes',
+        label: 'Notlar',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Eğitim içeriği, hedefler, sonuçlar vs.'
+      }
+    ],
+    calculate: (formData) => {
+      const cost = parseFloat(formData.cost) || 0;
+      const expectedReturn = parseFloat(formData.expectedReturn) || cost;
+      
+      return {
+        totalInvested: cost,
+        currentValue: expectedReturn,
+        units: '1 eğitim',
+        extraInfo: expectedReturn === cost ? 'Beklenen getiri girilmemiş' : null
       };
     }
   }

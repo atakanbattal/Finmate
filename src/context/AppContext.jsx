@@ -442,9 +442,12 @@ export function AppProvider({ children }) {
     
     // Check and fix investment types (English to Turkish migration)
     const investmentTypeMapping = {
-      'vehicle': 'arac',
-      'machinery': 'makine', 
-      'equipment': 'ekipman'
+      'vehicle': 'Araç',
+      'machinery': 'Makine', 
+      'equipment': 'Ekipman',
+      'arac': 'Araç',
+      'makine': 'Makine',
+      'ekipman': 'Ekipman'
     };
     
     const updatedInvestments = state.investments.map(investment => {

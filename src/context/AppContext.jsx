@@ -440,20 +440,6 @@ export function AppProvider({ children }) {
       return receivable;
     });
     
-    // Force migration by clearing localStorage if needed
-    const currentVersion = '2.1.0';
-    const storedVersion = localStorage.getItem('finmate_version');
-    
-    if (storedVersion !== currentVersion) {
-      console.log('🔄 FinMate güncellendi, localStorage temizleniyor...');
-      // Clear all data to force fresh start with new structure
-      localStorage.clear();
-      localStorage.setItem('finmate_version', currentVersion);
-      // Reload to start fresh
-      window.location.reload();
-      return;
-    }
-    
     // Check and fix investment types (English to Turkish migration)
     const investmentTypeMapping = {
       'vehicle': 'Araç',

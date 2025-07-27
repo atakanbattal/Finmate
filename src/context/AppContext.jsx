@@ -440,19 +440,39 @@ export function AppProvider({ children }) {
       return receivable;
     });
     
+    // Check and fix investment types (English to Turkish migration)
+    const investmentTypeMapping = {
+      'vehicle': 'arac',
+      'machinery': 'makine', 
+      'equipment': 'ekipman'
+    };
+    
+    const updatedInvestments = state.investments.map(investment => {
+      if (investmentTypeMapping[investment.type]) {
+        console.log('🔧 Migrating investment type:', investment.name, 'from', investment.type, 'to', investmentTypeMapping[investment.type]);
+        needsUpdate = true;
+        return {
+          ...investment,
+          type: investmentTypeMapping[investment.type]
+        };
+      }
+      return investment;
+    });
+    
     // Update state if migration is needed
     if (needsUpdate) {
-      console.log('📊 Dashboard kartları için migration yapılıyor...');
+      console.log('📊 Dashboard kartları ve yatırım türleri için migration yapılıyor...');
       dispatch({ 
         type: ActionTypes.LOAD_DATA, 
         payload: {
           ...state,
           debts: updatedDebts,
-          receivables: updatedReceivables
+          receivables: updatedReceivables,
+          investments: updatedInvestments
         }
       });
     }
-  }, [state.debts.length, state.receivables.length]); // Only run when items are added/removed
+  }, [state.debts.length, state.receivables.length, state.investments.length]); // Only run when items are added/removed
 
   // Calculate net cash flow and update goals automatically
   const updateGoalsWithCashFlow = () => {

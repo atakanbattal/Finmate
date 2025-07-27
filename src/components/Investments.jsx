@@ -301,11 +301,16 @@ const Investments = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Toplam Kazanç/Kayıp</p>
-              <p className={`text-2xl font-bold mt-2 ${
+              <div className={`flex items-baseline mt-2 ${
                 totalGains >= 0 ? 'text-success-600' : 'text-danger-600'
               }`}>
-                {totalGains >= 0 ? '+' : ''}{formatCurrency(totalGains)}
-              </p>
+                {totalGains >= 0 && (
+                  <span className="text-xl font-bold mr-1">+</span>
+                )}
+                <span className="text-2xl font-bold">
+                  {formatCurrency(Math.abs(totalGains))}
+                </span>
+              </div>
             </div>
             <div className={`p-3 rounded-full ${
               totalGains >= 0 ? 'bg-success-100' : 'bg-danger-100'

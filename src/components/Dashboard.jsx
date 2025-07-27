@@ -74,9 +74,11 @@ const Dashboard = () => {
     return sum + remainingAmount;
   }, 0);
 
-  // Yatırım değeri hesaplaması
+  // Yatırım değeri hesaplaması - DİNAMİK HESAPLAMA
   const totalInvestmentValue = investments.reduce((sum, inv) => {
-    return sum + (parseFloat(inv.currentValue) || 0);
+    // currentValue varsa onu kullan, yoksa amount'u kullan (fallback)
+    const currentValue = parseFloat(inv.currentValue) || parseFloat(inv.amount) || 0;
+    return sum + currentValue;
   }, 0);
 
   const totalInvestmentCost = investments.reduce((sum, inv) => {
@@ -104,10 +106,39 @@ const Dashboard = () => {
     totalDebts,
     totalReceivables,
     totalInvestmentValue,
+    totalInvestmentCost,
+    allTimeIncome,
+    allTimeExpenses,
+    totalAssets,
     totalWealth,
     debtsCount: debts.length,
-    receivablesCount: receivables.length
+    receivablesCount: receivables.length,
+    investmentsCount: investments.length,
+    formula: `(${totalInvestmentValue} + ${availableCash} + ${totalReceivables}) - ${totalDebts} = ${totalWealth}`
   });
+  
+  // Detaylı yatırım bilgileri
+  console.log('💰 Yatırım Detayları:', investments.map(inv => ({
+    name: inv.name,
+    amount: inv.amount,
+    currentValue: inv.currentValue,
+    type: inv.type
+  })));
+  
+  // Detaylı borç bilgileri
+  console.log('💳 Borç Detayları:', debts.map(debt => ({
+    name: debt.name,
+    totalAmount: debt.totalAmount,
+    paidAmount: debt.paidAmount,
+    remainingAmount: debt.remainingAmount
+  })));
+  
+  // Detaylı alacak bilgileri
+  console.log('💵 Alacak Detayları:', receivables.map(rec => ({
+    name: rec.name,
+    totalAmount: rec.totalAmount,
+    remainingAmount: rec.remainingAmount
+  })));
 
   // Form işlemleri
   const handleShowForm = (type) => {

@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import GoalInsights from './GoalInsights';
-import { getTransactionsWithRecurring } from '../utils/calculations';
+import { getTransactionsWithRecurring, calculateCashManagementData } from '../utils/calculations';
+import { investmentTypes } from './DynamicInvestmentForm';
 
 const Dashboard = () => {
   const { state, actions } = useApp();
@@ -61,47 +62,21 @@ const Dashboard = () => {
 
   const netCashFlow = totalIncome - totalExpenses;
 
-  // BORÇ VE ALACAK HESAPLAMALARI - KRİTİK FİX
-  // Toplam borçlar (kalan tutar)
-  const totalDebts = debts.reduce((sum, debt) => {
-    const remainingAmount = parseFloat(debt.remainingAmount) || (parseFloat(debt.totalAmount || 0) - parseFloat(debt.paidAmount || 0));
-    return sum + remainingAmount;
-  }, 0);
+  // NAKİT YÖNETİMİ İLE AYNI HESAPLAMA MANTĞI - TUTARLILIK İÇİN
+  const cashData = calculateCashManagementData(state, investmentTypes, selectedMonth, selectedYear, selectedPerson);
+  
+  // Aynı değerleri kullan
+  const totalDebts = cashData.totalDebts || 0;
+  const totalReceivables = cashData.totalReceivables || 0;
+  const totalInvestmentValue = cashData.totalInvestmentValue || 0;
+  const availableCash = cashData.availableCash || 0;
+  const totalWealth = cashData.totalWealth || 0;
+  const totalInvestmentCost = cashData.totalInvestmentCost || 0;
+  const allTimeIncome = cashData.totalIncome || 0;
+  const allTimeExpenses = cashData.totalExpenses || 0;
 
-  // Toplam alacaklar (kalan tutar)
-  const totalReceivables = receivables.reduce((sum, receivable) => {
-    const remainingAmount = parseFloat(receivable.remainingAmount) || parseFloat(receivable.totalAmount || 0);
-    return sum + remainingAmount;
-  }, 0);
-
-  // Yatırım değeri hesaplaması - DİNAMİK HESAPLAMA
-  const totalInvestmentValue = investments.reduce((sum, inv) => {
-    // currentValue varsa onu kullan, yoksa amount'u kullan (fallback)
-    const currentValue = parseFloat(inv.currentValue) || parseFloat(inv.amount) || 0;
-    return sum + currentValue;
-  }, 0);
-
-  const totalInvestmentCost = investments.reduce((sum, inv) => {
-    return sum + (parseFloat(inv.amount) || 0);
-  }, 0);
-
-  // Tüm zamanlar için mevcut nakit hesaplaması
-  const allTimeIncome = filteredTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-  const allTimeExpenses = filteredTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-  const availableCash = Math.max(0, allTimeIncome - allTimeExpenses - totalInvestmentCost);
-
-  // TOPLAM SERVET HESAPLAMASI - KULLANICININ İSTEDİĞİ FORMÜL
-  // Toplam Servet = (Yatırım Değeri + Mevcut Nakit + Alacaklar) - Kalan Borç
-  const totalAssets = totalInvestmentValue + availableCash + totalReceivables; // Toplam Varlıklar
-  const totalWealth = totalAssets - totalDebts; // Toplam Servet = Varlıklar - Borçlar
-
-  console.log('🎯 Dashboard Hesaplamaları:', {
+  console.log('🎯 Dashboard Hesaplamaları (NAKİT YÖNETİMİ İLE AYNI):', {
+    'KAYNAK': 'calculateCashManagementData fonksiyonu',
     availableCash,
     totalDebts,
     totalReceivables,
@@ -109,36 +84,12 @@ const Dashboard = () => {
     totalInvestmentCost,
     allTimeIncome,
     allTimeExpenses,
-    totalAssets,
     totalWealth,
-    debtsCount: debts.length,
-    receivablesCount: receivables.length,
-    investmentsCount: investments.length,
-    formula: `(${totalInvestmentValue} + ${availableCash} + ${totalReceivables}) - ${totalDebts} = ${totalWealth}`
+    'FORMÜL': `(${totalInvestmentValue} + ${availableCash} + ${totalReceivables}) - ${totalDebts} = ${totalWealth}`,
+    'cashData': cashData
   });
   
-  // Detaylı yatırım bilgileri
-  console.log('💰 Yatırım Detayları:', investments.map(inv => ({
-    name: inv.name,
-    amount: inv.amount,
-    currentValue: inv.currentValue,
-    type: inv.type
-  })));
-  
-  // Detaylı borç bilgileri
-  console.log('💳 Borç Detayları:', debts.map(debt => ({
-    name: debt.name,
-    totalAmount: debt.totalAmount,
-    paidAmount: debt.paidAmount,
-    remainingAmount: debt.remainingAmount
-  })));
-  
-  // Detaylı alacak bilgileri
-  console.log('💵 Alacak Detayları:', receivables.map(rec => ({
-    name: rec.name,
-    totalAmount: rec.totalAmount,
-    remainingAmount: rec.remainingAmount
-  })));
+  console.log('✅ TUTARLILIK: Dashboard ve Nakit Yönetimi artık aynı hesaplama fonksiyonunu kullanıyor!');
 
   // Form işlemleri
   const handleShowForm = (type) => {

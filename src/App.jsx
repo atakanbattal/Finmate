@@ -79,15 +79,24 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
       // Sayı validasyonu
       const amount = parseFloat(formData.amount);
       console.log('💰 SimpleModal Parsed Amount:', amount, 'Original:', formData.amount);
+      console.log('🌐 Browser:', navigator.userAgent.includes('Safari') ? 'Safari' : 'Other');
       
       if (isNaN(amount) || amount <= 0) {
         alert('Lütfen geçerli bir tutar girin');
         return;
       }
       
-      // JavaScript'in güvenli sayı sınırını kontrol et
-      if (amount > Number.MAX_SAFE_INTEGER) {
+      // JavaScript'in güvenli sayı sınırını kontrol et (Safari compatibility)
+      const maxSafeInteger = Number.MAX_SAFE_INTEGER || 9007199254740991;
+      if (amount > maxSafeInteger) {
         alert('Girilen tutar çok büyük. Lütfen daha küçük bir değer girin.');
+        return;
+      }
+      
+      // Safari için ek kontrol
+      if (typeof amount !== 'number' || !isFinite(amount)) {
+        console.error('❌ Safari compatibility: Invalid number type');
+        alert('Sayı formatı hatası. Lütfen tekrar deneyin.');
         return;
       }
 

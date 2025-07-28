@@ -43,9 +43,29 @@ export const TRANSACTION_TYPES = {
   EXPENSE: 'expense'
 };
 
+// Safari-compatible UUID generator
+const generateUUID = () => {
+  try {
+    // Modern browsers (Chrome, Firefox, newer Safari)
+    if (crypto && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for older Safari
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  } catch (error) {
+    console.warn('UUID generation fallback:', error);
+    // Ultimate fallback
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+};
+
 // Default data structure for a transaction
 export const createTransaction = (type, data = {}) => ({
-  id: data.id || crypto.randomUUID(),
+  id: data.id || generateUUID(),
   type, // 'income' or 'expense'
   amount: data.amount || 0,
   category: data.category || '',
@@ -77,11 +97,6 @@ export const createInvestment = (data = {}) => ({
   createdAt: data.createdAt || new Date().toISOString(),
   updatedAt: new Date().toISOString()
 });
-
-// Generate a simple UUID (compatible with all browsers)
-const generateUUID = () => {
-  return 'goal-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-};
 
 // Default data structure for a financial goal
 export const createGoal = (data = {}) => {

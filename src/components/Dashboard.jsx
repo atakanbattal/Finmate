@@ -109,15 +109,35 @@ const Dashboard = () => {
   };
 
   const handleAddTransaction = () => {
-    console.log('🚀 handleAddTransaction başladı');
-    console.log('📝 formData:', formData);
-    console.log('📝 transactionType:', transactionType);
-    
-    if (!formData.description.trim() || !formData.amount || parseFloat(formData.amount) <= 0) {
-      console.log('❌ Validation failed');
-      alert('Lütfen açıklama ve geçerli bir miktar girin.');
-      return;
-    }
+    try {
+      console.log('🚀 handleAddTransaction başladı');
+      console.log('📝 formData:', formData);
+      console.log('📝 transactionType:', transactionType);
+      
+      // PRODUCTION SAFE VALIDATION
+      if (!formData || typeof formData !== 'object') {
+        console.error('❌ formData is invalid:', formData);
+        alert('Form verileri geçersiz. Sayfayı yenileyip tekrar deneyin.');
+        return;
+      }
+      
+      if (!formData.description || typeof formData.description !== 'string' || !formData.description.trim()) {
+        console.log('❌ Description validation failed');
+        alert('Lütfen geçerli bir açıklama girin.');
+        return;
+      }
+      
+      if (!formData.amount || isNaN(parseFloat(formData.amount)) || parseFloat(formData.amount) <= 0) {
+        console.log('❌ Amount validation failed');
+        alert('Lütfen geçerli bir miktar girin.');
+        return;
+      }
+      
+      if (!transactionType || (transactionType !== 'income' && transactionType !== 'expense')) {
+        console.error('❌ transactionType is invalid:', transactionType);
+        alert('Lütfen işlem türünü seçin.');
+        return;
+      }
 
     const totalAmount = parseFloat(formData.amount);
     const installmentCount = parseInt(formData.installments) || 1;
@@ -160,33 +180,77 @@ const Dashboard = () => {
       };
       
       console.log('💾 Adding transaction:', newTransaction);
+      console.log('🔧 actions object:', actions);
       console.log('🔧 actions.addTransaction type:', typeof actions.addTransaction);
       
+      // PRODUCTION SAFE ACTION CALL
+      if (!actions || typeof actions !== 'object') {
+        console.error('❌ actions object is invalid:', actions);
+        alert('Uygulama durumu geçersiz. Sayfayı yenileyip tekrar deneyin.');
+        return;
+      }
+      
+      if (!actions.addTransaction || typeof actions.addTransaction !== 'function') {
+        console.error('❌ actions.addTransaction is not a function:', actions.addTransaction);
+        alert('Uygulama fonksiyonu bulunamadı. Sayfayı yenileyip tekrar deneyin.');
+        return;
+      }
+      
       try {
-        actions.addTransaction(newTransaction);
-        console.log('✅ Transaction added successfully');
+        const result = actions.addTransaction(newTransaction);
+        console.log('✅ Transaction added successfully, result:', result);
       } catch (error) {
         console.error('❌ Error adding transaction:', error);
-        alert('İşlem eklenirken hata oluştu: ' + error.message);
+        console.error('❌ Error stack:', error.stack);
+        alert('İşlem eklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
         return;
       }
     }
     
-    // Reset form
-    setFormData({ 
-      description: '', 
-      amount: '', 
-      date: new Date().toISOString().split('T')[0],
-      installments: 1,
-      installmentType: 'monthly'
-    });
-    setShowAddForm(false);
-    
-    // Başarı mesajı
-    const message = installmentCount > 1 
-      ? `${installmentCount} taksitli işlem başarıyla eklendi!`
-      : 'İşlem başarıyla eklendi!';
-    alert(message);
+      // PRODUCTION SAFE FORM RESET
+      try {
+        setFormData({ 
+          description: '', 
+          amount: '', 
+          date: new Date().toISOString().split('T')[0],
+          installments: 1,
+          installmentType: 'monthly'
+        });
+        setShowAddForm(false);
+        
+        // Başarı mesajı
+        const message = installmentCount > 1 
+          ? `${installmentCount} taksitli işlem başarıyla eklendi!`
+          : 'İşlem başarıyla eklendi!';
+        
+        // Production'da alert yerine daha güvenli bildirim
+        if (typeof alert === 'function') {
+          alert(message);
+        } else {
+          console.log('✅ SUCCESS:', message);
+        }
+        
+        console.log('✅ Form reset completed');
+      } catch (resetError) {
+        console.error('❌ Error during form reset:', resetError);
+        // Form reset hatası olsa bile işlem eklendi, sadece log'la
+      }
+      
+    } catch (outerError) {
+      console.error('❌ CRITICAL ERROR in handleAddTransaction:', outerError);
+      console.error('❌ Error stack:', outerError.stack);
+      console.error('❌ Current state - formData:', formData);
+      console.error('❌ Current state - transactionType:', transactionType);
+      console.error('❌ Current state - actions:', actions);
+      
+      // Production'da kullanıcıya anlamlı hata mesajı
+      const errorMessage = 'Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.';
+      if (typeof alert === 'function') {
+        alert(errorMessage);
+      } else {
+        console.error('❌ ALERT FALLBACK:', errorMessage);
+      }
+    }
   };
 
   return (

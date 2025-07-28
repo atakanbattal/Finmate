@@ -235,9 +235,32 @@ const SimpleGoalModal = ({ onClose, actions }) => {
 
 // Inner App component that uses the context
 function AppContent() {
-  const [currentView, setCurrentView] = useState('dashboard');
+  // Hash routing sistemi - URL'den currentView'i oku
+  const getViewFromHash = () => {
+    const hash = window.location.hash.replace('#/', '');
+    const validViews = ['dashboard', 'transactions', 'cash-management', 'investments', 'goals', 'reports', 'settings'];
+    return validViews.includes(hash) ? hash : 'dashboard';
+  };
+  
+  const [currentView, setCurrentView] = useState(getViewFromHash());
   const { state, actions } = useApp();
   const { activeModal, modalData } = state;
+  
+  // Hash değişikliklerini dinle
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentView(getViewFromHash());
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+  
+  // currentView değiştiğinde hash'i güncelle
+  const handleViewChange = (view) => {
+    setCurrentView(view);
+    window.location.hash = `#/${view}`;
+  };
 
   const renderCurrentView = () => {
     switch (currentView) {
@@ -262,7 +285,7 @@ function AppContent() {
 
   return (
     <>
-      <Layout currentView={currentView} setCurrentView={setCurrentView}>
+      <Layout currentView={currentView} setCurrentView={handleViewChange}>
         {renderCurrentView()}
       </Layout>
       

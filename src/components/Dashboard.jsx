@@ -177,12 +177,57 @@ const Dashboard = () => {
         return false;
       }
       
-      // Amount validation
+      // Amount validation with Turkish locale support
       const amount = formData.amount;
-      const numAmount = Number(amount);
+      
+      // BÜYÜK SAYI PARSE FIX: Türkçe locale desteği
+      // "54.000" -> 54000, "54,50" -> 54.5
+      let numAmount;
+      try {
+        if (!amount || typeof amount !== 'string' && typeof amount !== 'number') {
+          throw new Error('Amount is empty or invalid type');
+        }
+        
+        // String'e çevir ve temizle
+        const amountStr = String(amount).trim();
+        
+        // Türkçe format kontrolü: "54.000,50" veya "54.000" veya "54,50"
+        if (amountStr.includes('.') && amountStr.includes(',')) {
+          // "54.000,50" formatı - nokta binlik ayırıcı, virgül ondalık
+          const cleanAmount = amountStr.replace(/\./g, '').replace(',', '.');
+          numAmount = parseFloat(cleanAmount);
+        } else if (amountStr.includes('.') && !amountStr.includes(',')) {
+          // "54.000" veya "54.5" belirsizliği
+          const dotIndex = amountStr.lastIndexOf('.');
+          const afterDot = amountStr.substring(dotIndex + 1);
+          
+          if (afterDot.length === 3 && /^\d{3}$/.test(afterDot)) {
+            // "54.000" formatı - binlik ayırıcı
+            const cleanAmount = amountStr.replace(/\./g, '');
+            numAmount = parseFloat(cleanAmount);
+          } else {
+            // "54.5" formatı - ondalık
+            numAmount = parseFloat(amountStr);
+          }
+        } else if (amountStr.includes(',')) {
+          // "54,50" formatı - virgül ondalık ayırıcı
+          const cleanAmount = amountStr.replace(',', '.');
+          numAmount = parseFloat(cleanAmount);
+        } else {
+          // "54000" formatı - düz sayı
+          numAmount = parseFloat(amountStr);
+        }
+        
+        console.log('🔢 Amount parsing:', { original: amount, cleaned: numAmount });
+        
+      } catch (parseError) {
+        console.error('❌ Amount parsing error:', parseError, { amount });
+        numAmount = NaN;
+      }
+      
       if (!amount || isNaN(numAmount) || numAmount <= 0) {
-        const msg = 'Lütfen geçerli bir miktar girin.';
-        console.error('❌ Amount validation failed:', amount, numAmount);
+        const msg = 'Lütfen geçerli bir miktar girin. (Örn: 54000 veya 54.000 veya 54,50)';
+        console.error('❌ Amount validation failed:', { amount, numAmount });
         window.alert && window.alert(msg);
         return false;
       }
@@ -212,8 +257,8 @@ const Dashboard = () => {
       
       debugLog('✅ All validations passed');
       
-      // BULLETPROOF TRANSACTION CREATION
-      const totalAmount = Number(formData.amount);
+      // BULLETPROOF TRANSACTION CREATION with Turkish locale parsing
+      const totalAmount = numAmount; // Use already parsed amount
       const installmentCount = Math.max(1, parseInt(formData.installments) || 1);
       const installmentAmount = totalAmount / installmentCount;
       

@@ -335,9 +335,20 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
       }
     }
 
-    // Calculate correct investment amount and current value based on type
-    let calculatedAmount = parseFloat(formData.amount) || 0;
-    let calculatedCurrentValue = parseFloat(formData.currentValue) || 0;
+    // 🔧 TÜRKÇE LOCALE-AWARE NUMBER PARSING
+    const normalizeAmount = (value) => {
+      if (!value) return 0;
+      return parseFloat(
+        value
+          .toString()
+          .replace(/\./g, '')  // Binlik ayırıcıları sil
+          .replace(',', '.')   // Ondalık virgülü noktaya çevir
+      ) || 0;
+    };
+
+    // Calculate correct investment amount based on type
+    let calculatedAmount = normalizeAmount(formData.amount);
+    let calculatedCurrentValue = normalizeAmount(formData.currentValue);
   
     // Her yatırım türü için doğru tutarı VE güncel değeri hesapla
     if (investmentTypes[investmentType] && investmentTypes[investmentType].calculate) {
@@ -383,7 +394,7 @@ const DynamicInvestmentForm = ({ investment, onSubmit, onCancel }) => {
     // Handle DCA mode vs regular investment creation
     if (dcaMode && selectedExistingInvestment) {
       // DCA Mode: Add transaction to existing investment
-      const quantity = parseFloat(formData.quantity || formData.units || formData.lots || formData.amount || 1);
+      const quantity = normalizeAmount(formData.quantity || formData.units || formData.lots || formData.amount || 1);
       const pricePerUnit = quantity > 0 ? calculatedAmount / quantity : calculatedAmount;
       const currentPricePerUnit = quantity > 0 ? calculatedCurrentValue / quantity : calculatedCurrentValue;
       

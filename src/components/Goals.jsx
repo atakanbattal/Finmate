@@ -103,10 +103,21 @@ const Goals = () => {
           return;
         }
 
+        // 🔧 TÜRKÇE LOCALE-AWARE NUMBER PARSING
+        const normalizeAmount = (value) => {
+          if (!value) return 0;
+          return parseFloat(
+            value
+              .toString()
+              .replace(/\./g, '')  // Binlik ayırıcıları sil
+              .replace(',', '.')   // Ondalık virgülü noktaya çevir
+          ) || 0;
+        };
+
         const goalData = {
           ...formData,
-          targetAmount: parseFloat(formData.targetAmount) || 0,
-          currentAmount: parseFloat(formData.currentAmount) || 0
+          targetAmount: normalizeAmount(formData.targetAmount),
+          currentAmount: normalizeAmount(formData.currentAmount)
         };
 
         console.log('Goal data prepared:', goalData);

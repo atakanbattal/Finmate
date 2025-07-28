@@ -411,9 +411,33 @@ const Transactions = () => {
         return;
       }
 
+      // 🔧 TÜRKÇE LOCALE-AWARE NUMBER PARSING
+      // Türkçe format: 54.000,50 → 54000.50 (parseFloat için)
+      const normalizeAmount = (value) => {
+        if (!value) return 0;
+        return parseFloat(
+          value
+            .toString()
+            .replace(/\./g, '')  // Binlik ayırıcıları sil (54.000 → 54000)
+            .replace(',', '.')   // Ondalık virgülü noktaya çevir (,50 → .50)
+        ) || 0;
+      };
+
+      const parsedAmount = normalizeAmount(formData.amount);
+      console.log('🔢 Amount parsing:', {
+        original: formData.amount,
+        normalized: parsedAmount,
+        isValid: !isNaN(parsedAmount) && parsedAmount > 0
+      });
+
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        alert('Lütfen geçerli bir tutar girin');
+        return;
+      }
+
       const transactionData = {
         ...formData,
-        amount: parseFloat(formData.amount)
+        amount: parsedAmount
       };
 
       if (transaction) {
@@ -473,14 +497,39 @@ const Transactions = () => {
                   Tutar (₺)
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  onChange={(e) => {
+                    // Sadece sayı, virgül ve nokta karakterlerine izin ver
+                    const value = e.target.value.replace(/[^0-9.,]/g, '');
+                    setFormData({ ...formData, amount: value });
+                  }}
+                  onBlur={(e) => {
+                    // Blur'da Türkçe formatlama uygula
+                    const value = e.target.value;
+                    if (value && value.trim() !== '') {
+                      const normalized = value
+                        .replace(/\./g, '')  // Mevcut binlik ayırıcıları sil
+                        .replace(',', '.');  // Virgülü noktaya çevir
+                      
+                      const numValue = parseFloat(normalized);
+                      if (!isNaN(numValue) && numValue > 0) {
+                        // Türkçe formatta göster: 54000.50 → 54.000,50
+                        const formatted = new Intl.NumberFormat('tr-TR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        }).format(numValue);
+                        setFormData({ ...formData, amount: formatted });
+                      }
+                    }
+                  }}
                   className="input-field"
-                  placeholder="0.00"
+                  placeholder="0,00"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Örnek: 54.000,50 veya 1.234,00
+                </p>
               </div>
 
               {/* Category */}

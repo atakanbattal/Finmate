@@ -28,9 +28,26 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
       return;
     }
 
+    // 🔧 TÜRKÇE LOCALE-AWARE NUMBER PARSING
+    const normalizeAmount = (value) => {
+      if (!value) return 0;
+      return parseFloat(
+        value
+          .toString()
+          .replace(/\./g, '')  // Binlik ayırıcıları sil
+          .replace(',', '.')   // Ondalık virgülü noktaya çevir
+      ) || 0;
+    };
+
+    const parsedAmount = normalizeAmount(formData.amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert('Lütfen geçerli bir tutar girin');
+      return;
+    }
+
     const transactionData = createTransaction({
       description: formData.description,
-      amount: parseFloat(formData.amount),
+      amount: parsedAmount,
       category: formData.category || (formData.type === 'income' ? 'Diğer Gelir' : 'Diğer Gider'),
       type: formData.type,
       date: new Date().toISOString().split('T')[0],
@@ -68,14 +85,36 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tutar *</label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
                 value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9.,]/g, '');
+                  setFormData({ ...formData, amount: value });
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value;
+                  if (value && value.trim() !== '') {
+                    const normalized = value
+                      .replace(/\./g, '')
+                      .replace(',', '.');
+                    
+                    const numValue = parseFloat(normalized);
+                    if (!isNaN(numValue) && numValue > 0) {
+                      const formatted = new Intl.NumberFormat('tr-TR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      }).format(numValue);
+                      setFormData({ ...formData, amount: formatted });
+                    }
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="0.00"
+                placeholder="0,00"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Örnek: 54.000,50 veya 1.234,00
+              </p>
             </div>
 
             <div>

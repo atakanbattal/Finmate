@@ -109,7 +109,12 @@ const Dashboard = () => {
   };
 
   const handleAddTransaction = () => {
+    console.log('🚀 handleAddTransaction başladı');
+    console.log('📝 formData:', formData);
+    console.log('📝 transactionType:', transactionType);
+    
     if (!formData.description.trim() || !formData.amount || parseFloat(formData.amount) <= 0) {
+      console.log('❌ Validation failed');
       alert('Lütfen açıklama ve geçerli bir miktar girin.');
       return;
     }
@@ -154,7 +159,17 @@ const Dashboard = () => {
         } : null
       };
       
-      actions.addTransaction(newTransaction);
+      console.log('💾 Adding transaction:', newTransaction);
+      console.log('🔧 actions.addTransaction type:', typeof actions.addTransaction);
+      
+      try {
+        actions.addTransaction(newTransaction);
+        console.log('✅ Transaction added successfully');
+      } catch (error) {
+        console.error('❌ Error adding transaction:', error);
+        alert('İşlem eklenirken hata oluştu: ' + error.message);
+        return;
+      }
     }
     
     // Reset form

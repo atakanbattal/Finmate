@@ -22,22 +22,51 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.description || !formData.amount) {
-      alert('Lütfen açıklama ve tutar alanlarını doldurun');
-      return;
+    
+    try {
+      console.log('🔍 SimpleTransactionModal Form Data:', formData);
+      
+      if (!formData.description || !formData.amount) {
+        alert('Lütfen açıklama ve tutar alanlarını doldurun');
+        return;
+      }
+
+      // Sayı validasyonu
+      const amount = parseFloat(formData.amount);
+      console.log('💰 SimpleModal Parsed Amount:', amount, 'Original:', formData.amount);
+      
+      if (isNaN(amount) || amount <= 0) {
+        alert('Lütfen geçerli bir tutar girin');
+        return;
+      }
+      
+      // JavaScript'in güvenli sayı sınırını kontrol et
+      if (amount > Number.MAX_SAFE_INTEGER) {
+        alert('Girilen tutar çok büyük. Lütfen daha küçük bir değer girin.');
+        return;
+      }
+
+      const transactionData = createTransaction({
+        description: formData.description,
+        amount: amount,
+        category: formData.category || (formData.type === 'income' ? 'Diğer Gelir' : 'Diğer Gider'),
+        type: formData.type,
+        date: new Date().toISOString().split('T')[0],
+        userId: 'default'
+      });
+      
+      console.log('📊 SimpleModal Transaction Data:', transactionData);
+      console.log('➕ SimpleModal Adding transaction...');
+      
+      actions.addTransaction(transactionData);
+      
+      console.log('✅ SimpleModal Transaction added successfully');
+      onClose();
+      
+    } catch (error) {
+      console.error('❌ SimpleModal Transaction Error:', error);
+      alert('İşlem eklenirken bir hata oluştu: ' + error.message);
     }
-
-    const transactionData = createTransaction({
-      description: formData.description,
-      amount: parseFloat(formData.amount),
-      category: formData.category || (formData.type === 'income' ? 'Diğer Gelir' : 'Diğer Gider'),
-      type: formData.type,
-      date: new Date().toISOString().split('T')[0],
-      userId: 'default'
-    });
-
-    actions.addTransaction(transactionData);
-    onClose();
   };
 
   return (

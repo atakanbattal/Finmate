@@ -406,23 +406,54 @@ const Transactions = () => {
 
     const handleSubmit = (e) => {
       e.preventDefault();
-      if (!formData.amount || !formData.category || !formData.description) {
-        alert('Lütfen tüm alanları doldurun');
-        return;
-      }
-
-      const transactionData = {
-        ...formData,
-        amount: parseFloat(formData.amount)
-      };
-
-      if (transaction) {
-        actions.updateTransaction({ ...transaction, ...transactionData });
-      } else {
-        actions.addTransaction(createTransaction(formData.type, transactionData));
-      }
       
-      onClose();
+      try {
+        console.log('🔍 Form Data:', formData);
+        
+        if (!formData.amount || !formData.category || !formData.description) {
+          alert('Lütfen tüm alanları doldurun');
+          return;
+        }
+
+        // Sayı validasyonu
+        const amount = parseFloat(formData.amount);
+        console.log('💰 Parsed Amount:', amount, 'Original:', formData.amount);
+        
+        if (isNaN(amount) || amount <= 0) {
+          alert('Lütfen geçerli bir tutar girin');
+          return;
+        }
+        
+        // JavaScript'in güvenli sayı sınırını kontrol et
+        if (amount > Number.MAX_SAFE_INTEGER) {
+          alert('Girilen tutar çok büyük. Lütfen daha küçük bir değer girin.');
+          return;
+        }
+
+        const transactionData = {
+          ...formData,
+          amount: amount
+        };
+        
+        console.log('📊 Transaction Data:', transactionData);
+
+        if (transaction) {
+          console.log('✏️ Updating transaction...');
+          actions.updateTransaction({ ...transaction, ...transactionData });
+        } else {
+          console.log('➕ Adding new transaction...');
+          const newTransaction = createTransaction(formData.type, transactionData);
+          console.log('🆕 Created Transaction:', newTransaction);
+          actions.addTransaction(newTransaction);
+        }
+        
+        console.log('✅ Transaction processed successfully');
+        onClose();
+        
+      } catch (error) {
+        console.error('❌ Transaction Error:', error);
+        alert('İşlem eklenirken bir hata oluştu: ' + error.message);
+      }
     };
 
     const categories = formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;

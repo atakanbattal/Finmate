@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -6,38 +6,9 @@ import {
   Plus
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { formatCurrency } from '../utils/formatters';
-import { calculateCashManagementData, getTransactionsWithRecurring } from '../utils/calculations';
-import { investmentTypes } from './DynamicInvestmentForm';
 import GoalInsights from './GoalInsights';
-
-// PRODUCTION-SAFE ERROR LOGGING
-const logError = (error, context = '') => {
-  const errorLog = {
-    timestamp: new Date().toISOString(),
-    context: context,
-    error: {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    },
-    environment: process.env.NODE_ENV,
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
-    url: typeof window !== 'undefined' ? window.location.href : 'unknown'
-  };
-  
-  console.error('🚨 DASHBOARD ERROR:', errorLog);
-  
-  // Store in localStorage for debugging
-  try {
-    const existingLogs = JSON.parse(localStorage.getItem('finmate_dashboard_errors') || '[]');
-    existingLogs.push(errorLog);
-    if (existingLogs.length > 5) existingLogs.shift(); // Keep only last 5
-    localStorage.setItem('finmate_dashboard_errors', JSON.stringify(existingLogs));
-  } catch (logError) {
-    console.error('Failed to log error to localStorage:', logError);
-  }
-};
+import { getTransactionsWithRecurring, calculateCashManagementData } from '../utils/calculations';
+import { investmentTypes } from './DynamicInvestmentForm';
 
 const Dashboard = () => {
   const { state, actions } = useApp();
@@ -137,262 +108,71 @@ const Dashboard = () => {
     });
   };
 
-  // BULLETPROOF PRODUCTION-SAFE TRANSACTION HANDLER WITH ERROR BOUNDARY
-  const handleAddTransaction = React.useCallback(() => {
-    try {
-      console.log('🚀 BULLETPROOF handleAddTransaction başladı');
-      
-      // IMMEDIATE RETURN GUARD - Production'da async işlemler için
-      if (typeof window === 'undefined') {
-        console.error('❌ Window object not available');
-        logError(new Error('Window object not available'), 'WINDOW_CHECK');
-        return;
-      }
-    
-    // PRODUCTION ENVIRONMENT DETECTION
-    const isProduction = process.env.NODE_ENV === 'production';
-    const debugLog = isProduction ? () => {} : console.log;
-    
-    debugLog('🚀 BULLETPROOF handleAddTransaction başladı');
-    debugLog('📝 Environment:', process.env.NODE_ENV);
-    debugLog('📝 formData:', formData);
-    debugLog('📝 transactionType:', transactionType);
-    
-    // BULLETPROOF VALIDATION - Production'da kesinlikle çalışacak
-    try {
-      // Form data validation
-      if (!formData || Object.prototype.toString.call(formData) !== '[object Object]') {
-        const msg = 'Form verileri geçersiz. Sayfayı yenileyip tekrar deneyin.';
-        console.error('❌ formData validation failed:', formData);
-        window.alert && window.alert(msg);
-        return false;
-      }
-      
-      // Description validation
-      const description = formData.description;
-      if (!description || typeof description !== 'string' || description.trim().length === 0) {
-        const msg = 'Lütfen geçerli bir açıklama girin.';
-        console.error('❌ Description validation failed:', description);
-        window.alert && window.alert(msg);
-        return false;
-      }
-      
-      // Amount validation with Turkish locale support
-      const amount = formData.amount;
-      
-      // BÜYÜK SAYI PARSE FIX: Türkçe locale desteği
-      // "54.000" -> 54000, "54,50" -> 54.5
-      let numAmount;
-      try {
-        if (!amount || typeof amount !== 'string' && typeof amount !== 'number') {
-          throw new Error('Amount is empty or invalid type');
-        }
-        
-        // String'e çevir ve temizle
-        const amountStr = String(amount).trim();
-        
-        // Türkçe format kontrolü: "54.000,50" veya "54.000" veya "54,50"
-        if (amountStr.includes('.') && amountStr.includes(',')) {
-          // "54.000,50" formatı - nokta binlik ayırıcı, virgül ondalık
-          const cleanAmount = amountStr.replace(/\./g, '').replace(',', '.');
-          numAmount = parseFloat(cleanAmount);
-        } else if (amountStr.includes('.') && !amountStr.includes(',')) {
-          // "54.000" veya "54.5" belirsizliği
-          const dotIndex = amountStr.lastIndexOf('.');
-          const afterDot = amountStr.substring(dotIndex + 1);
-          
-          if (afterDot.length === 3 && /^\d{3}$/.test(afterDot)) {
-            // "54.000" formatı - binlik ayırıcı
-            const cleanAmount = amountStr.replace(/\./g, '');
-            numAmount = parseFloat(cleanAmount);
-          } else {
-            // "54.5" formatı - ondalık
-            numAmount = parseFloat(amountStr);
-          }
-        } else if (amountStr.includes(',')) {
-          // "54,50" formatı - virgül ondalık ayırıcı
-          const cleanAmount = amountStr.replace(',', '.');
-          numAmount = parseFloat(cleanAmount);
-        } else {
-          // "54000" formatı - düz sayı
-          numAmount = parseFloat(amountStr);
-        }
-        
-        console.log('🔢 Amount parsing:', { original: amount, cleaned: numAmount });
-        
-      } catch (parseError) {
-        console.error('❌ Amount parsing error:', parseError, { amount });
-        numAmount = NaN;
-      }
-      
-      if (!amount || isNaN(numAmount) || numAmount <= 0) {
-        const msg = 'Lütfen geçerli bir miktar girin. (Örn: 54000 veya 54.000 veya 54,50)';
-        console.error('❌ Amount validation failed:', { amount, numAmount });
-        window.alert && window.alert(msg);
-        return false;
-      }
-      
-      // Transaction type validation
-      if (!transactionType || !['income', 'expense'].includes(transactionType)) {
-        const msg = 'Lütfen işlem türünü seçin.';
-        console.error('❌ TransactionType validation failed:', transactionType);
-        window.alert && window.alert(msg);
-        return false;
-      }
-      
-      // Actions validation
-      if (!actions || Object.prototype.toString.call(actions) !== '[object Object]') {
-        const msg = 'Uygulama durumu geçersiz. Sayfayı yenileyip tekrar deneyin.';
-        console.error('❌ Actions object validation failed:', actions);
-        window.alert && window.alert(msg);
-        return false;
-      }
-      
-      if (!actions.addTransaction || typeof actions.addTransaction !== 'function') {
-        const msg = 'Uygulama fonksiyonu bulunamadı. Sayfayı yenileyip tekrar deneyin.';
-        console.error('❌ addTransaction function validation failed:', actions.addTransaction);
-        window.alert && window.alert(msg);
-        return false;
-      }
-      
-      debugLog('✅ All validations passed');
-      
-      // BULLETPROOF TRANSACTION CREATION with Turkish locale parsing
-      const totalAmount = numAmount; // Use already parsed amount
-      const installmentCount = Math.max(1, parseInt(formData.installments) || 1);
-      const installmentAmount = totalAmount / installmentCount;
-      
-      debugLog('📊 Transaction details:', { totalAmount, installmentCount, installmentAmount });
-      
-      // Process each installment
-      for (let i = 0; i < installmentCount; i++) {
-        try {
-          const installmentDate = new Date(formData.date || new Date());
-          
-          // Calculate installment date
-          switch (formData.installmentType) {
-            case 'monthly':
-              installmentDate.setMonth(installmentDate.getMonth() + i);
-              break;
-            case 'weekly':
-              installmentDate.setDate(installmentDate.getDate() + (i * 7));
-              break;
-            case 'daily':
-              installmentDate.setDate(installmentDate.getDate() + i);
-              break;
-            default:
-              // No date change for single payment
-              break;
-          }
-          
-          // Create transaction object
-          const transactionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`;
-          const newTransaction = {
-            id: transactionId,
-            type: String(transactionType),
-            amount: Number(installmentAmount),
-            description: installmentCount > 1 
-              ? `${String(description).trim()} (${i + 1}/${installmentCount})`
-              : String(description).trim(),
-            category: 'Genel',
-            date: installmentDate.toISOString().split('T')[0],
-            userId: (state && state.currentUser) ? String(state.currentUser) : 'default',
-            createdAt: new Date().toISOString(),
-            isInstallment: installmentCount > 1,
-            installmentInfo: installmentCount > 1 ? {
-              current: i + 1,
-              total: installmentCount,
-              originalAmount: totalAmount
-            } : null
-          };
-          
-          debugLog(`💾 Adding transaction ${i + 1}/${installmentCount}:`, newTransaction);
-          
-          // BULLETPROOF ACTION CALL
-          const actionResult = actions.addTransaction(newTransaction);
-          debugLog(`✅ Transaction ${i + 1} added successfully:`, actionResult);
-          
-        } catch (transactionError) {
-          console.error(`❌ Error adding transaction ${i + 1}:`, transactionError);
-          const msg = `İşlem ${i + 1} eklenirken hata oluştu: ${transactionError.message || 'Bilinmeyen hata'}`;
-          window.alert && window.alert(msg);
-          return false;
-        }
-      }
-      
-      // BULLETPROOF FORM RESET
-      try {
-        const resetData = {
-          description: '',
-          amount: '',
-          date: new Date().toISOString().split('T')[0],
-          installments: 1,
-          installmentType: 'monthly'
-        };
-        
-        setFormData(resetData);
-        setShowAddForm(false);
-        
-        const successMessage = installmentCount > 1 
-          ? `${installmentCount} taksitli işlem başarıyla eklendi!`
-          : 'İşlem başarıyla eklendi!';
-        
-        debugLog('✅ Form reset completed');
-        debugLog('✅ SUCCESS:', successMessage);
-        
-        // BULLETPROOF SUCCESS NOTIFICATION
-        if (window.alert && typeof window.alert === 'function') {
-          window.alert(successMessage);
-        } else {
-          console.log('✅ SUCCESS (no alert):', successMessage);
-        }
-        
-        return true;
-        
-      } catch (resetError) {
-        console.error('❌ Error during form reset:', resetError);
-        // Form reset hatası olsa bile işlem eklendi
-        const msg = 'Form sıfırlanurken hata oluştu ama işlem eklendi.';
-        window.alert && window.alert(msg);
-        return true;
-      }
-      
-    } catch (criticalError) {
-      console.error('❌ CRITICAL ERROR in handleAddTransaction:', criticalError);
-      console.error('❌ Error name:', criticalError.name);
-      console.error('❌ Error message:', criticalError.message);
-      console.error('❌ Error stack:', criticalError.stack);
-      console.error('❌ Current state:', {
-        formData: formData,
-        transactionType: transactionType,
-        actions: actions,
-        state: state
-      });
-      
-      // BULLETPROOF ERROR NOTIFICATION
-      const errorMessage = `Beklenmeyen hata: ${criticalError.message || 'Bilinmeyen hata'}. Sayfayı yenileyip tekrar deneyin.`;
-      if (window.alert && typeof window.alert === 'function') {
-        window.alert(errorMessage);
-      } else {
-        console.error('❌ CRITICAL ERROR (no alert):', errorMessage);
-      }
-      
-      return false;
+  const handleAddTransaction = () => {
+    if (!formData.description.trim() || !formData.amount || parseFloat(formData.amount) <= 0) {
+      alert('Lütfen açıklama ve geçerli bir miktar girin.');
+      return;
     }
-    } catch (outerError) {
-      console.error('❌ CRITICAL ERROR in handleAddTransaction:', outerError);
-      logError(outerError, 'CRITICAL_TRANSACTION_ERROR');
+
+    const totalAmount = parseFloat(formData.amount);
+    const installmentCount = parseInt(formData.installments) || 1;
+    const installmentAmount = totalAmount / installmentCount;
+    
+    // Taksit sayısına göre işlemler oluştur
+    for (let i = 0; i < installmentCount; i++) {
+      const installmentDate = new Date(formData.date);
       
-      const errorMessage = `Beklenmeyen hata: ${outerError.message || 'Bilinmeyen hata'}. Sayfayı yenileyip tekrar deneyin.`;
-      if (window.alert && typeof window.alert === 'function') {
-        window.alert(errorMessage);
-      } else {
-        console.error('❌ CRITICAL ERROR (no alert):', errorMessage);
+      // Taksit tipine göre tarih hesapla
+      switch (formData.installmentType) {
+        case 'monthly':
+          installmentDate.setMonth(installmentDate.getMonth() + i);
+          break;
+        case 'weekly':
+          installmentDate.setDate(installmentDate.getDate() + (i * 7));
+          break;
+        case 'daily':
+          installmentDate.setDate(installmentDate.getDate() + i);
+          break;
       }
       
-      return false;
+      const newTransaction = {
+        id: `${Date.now()}_${i}`,
+        type: transactionType,
+        amount: installmentAmount,
+        description: installmentCount > 1 
+          ? `${formData.description.trim()} (${i + 1}/${installmentCount})`
+          : formData.description.trim(),
+        category: 'Genel',
+        date: installmentDate.toISOString().split('T')[0],
+        userId: state.currentUser || 'default',
+        createdAt: new Date().toISOString(),
+        isInstallment: installmentCount > 1,
+        installmentInfo: installmentCount > 1 ? {
+          current: i + 1,
+          total: installmentCount,
+          originalAmount: totalAmount
+        } : null
+      };
+      
+      actions.addTransaction(newTransaction);
     }
-  }, [formData, transactionType, actions, state, setFormData, setShowAddForm]); // React.useCallback dependencies
+    
+    // Reset form
+    setFormData({ 
+      description: '', 
+      amount: '', 
+      date: new Date().toISOString().split('T')[0],
+      installments: 1,
+      installmentType: 'monthly'
+    });
+    setShowAddForm(false);
+    
+    // Başarı mesajı
+    const message = installmentCount > 1 
+      ? `${installmentCount} taksitli işlem başarıyla eklendi!`
+      : 'İşlem başarıyla eklendi!';
+    alert(message);
+  };
 
   return (
     <div className="space-y-4">

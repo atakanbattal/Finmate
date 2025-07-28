@@ -9,7 +9,6 @@ import Reports from './components/Reports';
 import Settings from './components/Settings';
 import CashManagement from './components/CashManagement';
 import DynamicInvestmentForm from './components/DynamicInvestmentForm';
-import ErrorBoundary from './components/ErrorBoundary';
 import { createTransaction, createGoal, createReceivable } from './types';
 
 // Simple Transaction Modal Component
@@ -28,53 +27,9 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
       return;
     }
 
-    // 🔧 PRODUCTION-SAFE TÜRKÇE LOCALE-AWARE NUMBER PARSING
-    const normalizeAmount = (value) => {
-      try {
-        if (!value || value === '' || value === null || value === undefined) {
-          return 0;
-        }
-        
-        // String'e çevir ve temizle
-        let cleanValue = String(value).trim();
-        
-        // Boş string kontrolü
-        if (cleanValue === '') {
-          return 0;
-        }
-        
-        // Türkçe format normalize et
-        cleanValue = cleanValue
-          .replace(/\./g, '')  // Binlik ayırıcıları sil (54.000 → 54000)
-          .replace(',', '.');  // Ondalık virgülü noktaya çevir (,50 → .50)
-        
-        // parseFloat ile dönüştür
-        const result = parseFloat(cleanValue);
-        
-        // NaN kontrolü
-        if (isNaN(result)) {
-          console.error('❌ Production SimpleModal: parseFloat failed for value:', value, 'cleaned:', cleanValue);
-          return 0;
-        }
-        
-        console.log('✅ Production SimpleModal: Amount parsed successfully:', value, '→', result);
-        return result;
-        
-      } catch (error) {
-        console.error('❌ Production SimpleModal: normalizeAmount error:', error, 'value:', value);
-        return 0;
-      }
-    };
-
-    const parsedAmount = normalizeAmount(formData.amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      alert('Lütfen geçerli bir tutar girin');
-      return;
-    }
-
     const transactionData = createTransaction({
       description: formData.description,
-      amount: parsedAmount,
+      amount: parseFloat(formData.amount),
       category: formData.category || (formData.type === 'income' ? 'Diğer Gelir' : 'Diğer Gider'),
       type: formData.type,
       date: new Date().toISOString().split('T')[0],
@@ -112,55 +67,14 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tutar *</label>
               <input
-                type="text"
+                type="number"
+                step="0.01"
                 value={formData.amount}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9.,]/g, '');
-                  setFormData({ ...formData, amount: value });
-                }}
-                onBlur={(e) => {
-                  // 🔧 PRODUCTION-SAFE SimpleTransactionModal onBlur handler
-                  try {
-                    const value = e.target.value;
-                    if (value && value.trim() !== '') {
-                      // String'e çevir ve temizle
-                      let cleanValue = String(value).trim();
-                      
-                      if (cleanValue === '') {
-                        return;
-                      }
-                      
-                      // Türkçe format normalize et
-                      const normalized = cleanValue
-                        .replace(/\./g, '')  // Binlik ayırıcıları sil
-                        .replace(',', '.');  // Virgülü noktaya çevir
-                      
-                      const numValue = parseFloat(normalized);
-                      
-                      if (!isNaN(numValue) && numValue > 0) {
-                        const formatted = new Intl.NumberFormat('tr-TR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        }).format(numValue);
-                        
-                        console.log('✅ Production SimpleModal onBlur: Formatted successfully:', value, '→', formatted);
-                        setFormData({ ...formData, amount: formatted });
-                      } else {
-                        console.error('❌ Production SimpleModal onBlur: Invalid number:', value, 'normalized:', normalized);
-                      }
-                    }
-                  } catch (error) {
-                    console.error('❌ Production SimpleModal onBlur error:', error, 'value:', e.target.value);
-                    // Hata durumunda değeri olduğu gibi bırak
-                  }
-                }}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="0,00"
+                placeholder="0.00"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Örnek: 54.000,50 veya 1.234,00
-              </p>
             </div>
 
             <div>
@@ -320,32 +234,9 @@ const SimpleGoalModal = ({ onClose, actions }) => {
 
 // Inner App component that uses the context
 function AppContent() {
-  // Hash routing sistemi - URL'den currentView'i oku
-  const getViewFromHash = () => {
-    const hash = window.location.hash.replace('#/', '');
-    const validViews = ['dashboard', 'transactions', 'cash-management', 'investments', 'goals', 'reports', 'settings'];
-    return validViews.includes(hash) ? hash : 'dashboard';
-  };
-  
-  const [currentView, setCurrentView] = useState(getViewFromHash());
+  const [currentView, setCurrentView] = useState('dashboard');
   const { state, actions } = useApp();
   const { activeModal, modalData } = state;
-  
-  // Hash değişikliklerini dinle
-  React.useEffect(() => {
-    const handleHashChange = () => {
-      setCurrentView(getViewFromHash());
-    };
-    
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-  
-  // currentView değiştiğinde hash'i güncelle
-  const handleViewChange = (view) => {
-    setCurrentView(view);
-    window.location.hash = `#/${view}`;
-  };
 
   const renderCurrentView = () => {
     switch (currentView) {
@@ -370,7 +261,7 @@ function AppContent() {
 
   return (
     <>
-      <Layout currentView={currentView} setCurrentView={handleViewChange}>
+      <Layout currentView={currentView} setCurrentView={setCurrentView}>
         {renderCurrentView()}
       </Layout>
       
@@ -402,13 +293,9 @@ function AppContent() {
 // Main App component with provider
 function App() {
   return (
-    <ErrorBoundary>
-      <AppProvider>
-        <ErrorBoundary>
-          <AppContent />
-        </ErrorBoundary>
-      </AppProvider>
-    </ErrorBoundary>
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 

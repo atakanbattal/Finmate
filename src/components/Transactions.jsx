@@ -411,60 +411,9 @@ const Transactions = () => {
         return;
       }
 
-      // 🔧 PRODUCTION-SAFE TÜRKÇE LOCALE-AWARE NUMBER PARSING
-      // Türkçe format: 54.000,50 → 54000.50 (parseFloat için)
-      const normalizeAmount = (value) => {
-        try {
-          if (!value || value === '' || value === null || value === undefined) {
-            return 0;
-          }
-          
-          // String'e çevir ve temizle
-          let cleanValue = String(value).trim();
-          
-          // Boş string kontrolü
-          if (cleanValue === '') {
-            return 0;
-          }
-          
-          // Türkçe format normalize et
-          cleanValue = cleanValue
-            .replace(/\./g, '')  // Binlik ayırıcıları sil (54.000 → 54000)
-            .replace(',', '.');  // Ondalık virgülü noktaya çevir (,50 → .50)
-          
-          // parseFloat ile dönüştür
-          const result = parseFloat(cleanValue);
-          
-          // NaN kontrolü
-          if (isNaN(result)) {
-            console.error('❌ Production: parseFloat failed for value:', value, 'cleaned:', cleanValue);
-            return 0;
-          }
-          
-          console.log('✅ Production: Amount parsed successfully:', value, '→', result);
-          return result;
-          
-        } catch (error) {
-          console.error('❌ Production: normalizeAmount error:', error, 'value:', value);
-          return 0;
-        }
-      };
-
-      const parsedAmount = normalizeAmount(formData.amount);
-      console.log('🔢 Amount parsing:', {
-        original: formData.amount,
-        normalized: parsedAmount,
-        isValid: !isNaN(parsedAmount) && parsedAmount > 0
-      });
-
-      if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        alert('Lütfen geçerli bir tutar girin');
-        return;
-      }
-
       const transactionData = {
         ...formData,
-        amount: parsedAmount
+        amount: parseFloat(formData.amount)
       };
 
       if (transaction) {
@@ -524,57 +473,14 @@ const Transactions = () => {
                   Tutar (₺)
                 </label>
                 <input
-                  type="text"
+                  type="number"
+                  step="0.01"
                   value={formData.amount}
-                  onChange={(e) => {
-                    // Sadece sayı, virgül ve nokta karakterlerine izin ver
-                    const value = e.target.value.replace(/[^0-9.,]/g, '');
-                    setFormData({ ...formData, amount: value });
-                  }}
-                  onBlur={(e) => {
-                    // 🔧 PRODUCTION-SAFE Blur'da Türkçe formatlama uygula
-                    try {
-                      const value = e.target.value;
-                      if (value && value.trim() !== '') {
-                        // String'e çevir ve temizle
-                        let cleanValue = String(value).trim();
-                        
-                        if (cleanValue === '') {
-                          return;
-                        }
-                        
-                        // Türkçe format normalize et
-                        const normalized = cleanValue
-                          .replace(/\./g, '')  // Mevcut binlik ayırıcıları sil
-                          .replace(',', '.');  // Virgülü noktaya çevir
-                        
-                        const numValue = parseFloat(normalized);
-                        
-                        if (!isNaN(numValue) && numValue > 0) {
-                          // Türkçe formatta göster: 54000.50 → 54.000,50
-                          const formatted = new Intl.NumberFormat('tr-TR', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          }).format(numValue);
-                          
-                          console.log('✅ Production onBlur: Formatted successfully:', value, '→', formatted);
-                          setFormData({ ...formData, amount: formatted });
-                        } else {
-                          console.error('❌ Production onBlur: Invalid number:', value, 'normalized:', normalized);
-                        }
-                      }
-                    } catch (error) {
-                      console.error('❌ Production onBlur error:', error, 'value:', e.target.value);
-                      // Hata durumunda değeri olduğu gibi bırak
-                    }
-                  }}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   className="input-field"
-                  placeholder="0,00"
+                  placeholder="0.00"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Örnek: 54.000,50 veya 1.234,00
-                </p>
               </div>
 
               {/* Category */}

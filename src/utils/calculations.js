@@ -404,40 +404,16 @@ export const calculateCashManagementData = (state, investmentTypes, selectedMont
   
   const availableCash = Math.max(0, allTimeIncome - allTimeExpenses - totalInvestmentCost);
   
-  // Calculate total debts (remaining amounts) - AY FİLTRESİ İLE
+  // Calculate total debts (remaining amounts)
   const totalDebts = (state.debts || []).reduce((sum, debt) => {
-    // Borç tarihi seçilen ay/yıl aralığında mı kontrol et
-    if (debt.dueDate) {
-      const debtDate = new Date(debt.dueDate);
-      // Eğer borç vadesi seçilen aydan sonraysa, bu ayda aktif sayılır
-      if (debtDate >= startDate) {
-        const remainingAmount = parseFloat(debt.remainingAmount) || 0;
-        return sum + remainingAmount;
-      }
-    } else {
-      // Vade tarihi yoksa her zaman dahil et
-      const remainingAmount = parseFloat(debt.remainingAmount) || 0;
-      return sum + remainingAmount;
-    }
-    return sum;
+    const remainingAmount = parseFloat(debt.remainingAmount) || 0;
+    return sum + remainingAmount;
   }, 0);
   
-  // Calculate total receivables (remaining amounts) - AY FİLTRESİ İLE
+  // Calculate total receivables (remaining amounts)
   const totalReceivables = (state.receivables || []).reduce((sum, receivable) => {
-    // Alacak tarihi seçilen ay/yıl aralığında mı kontrol et
-    if (receivable.dueDate) {
-      const receivableDate = new Date(receivable.dueDate);
-      // Eğer alacak vadesi seçilen aydan sonraysa, bu ayda aktif sayılır
-      if (receivableDate >= startDate) {
-        const remainingAmount = parseFloat(receivable.remainingAmount) || 0;
-        return sum + remainingAmount;
-      }
-    } else {
-      // Vade tarihi yoksa her zaman dahil et
-      const remainingAmount = parseFloat(receivable.remainingAmount) || 0;
-      return sum + remainingAmount;
-    }
-    return sum;
+    const remainingAmount = parseFloat(receivable.remainingAmount) || 0;
+    return sum + remainingAmount;
   }, 0);
   
   // DOĞRU TOPLAM SERVET HESAPLAMASI:

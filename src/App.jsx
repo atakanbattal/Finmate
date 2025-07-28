@@ -1,15 +1,60 @@
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import Layout from './components/Layout';
+import { createTransaction, createGoal, createReceivable } from './types';
 import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
+import CashManagement from './components/CashManagement';
 import Investments from './components/Investments';
 import Goals from './components/Goals';
-import Reports from './components/Reports';
-import Settings from './components/Settings';
-import CashManagement from './components/CashManagement';
 import DynamicInvestmentForm from './components/DynamicInvestmentForm';
-import { createTransaction, createGoal, createReceivable } from './types';
+import './App.css';
+
+// Global Error Boundary
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error(' GLOBAL ERROR BOUNDARY CAUGHT:', error);
+    console.error(' Error Info:', errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
+            <h1 className="text-2xl font-bold text-red-600 mb-4"> Uygulama Hatası</h1>
+            <p className="text-gray-700 mb-4">Bir hata oluştu. Console'u açıp hata detaylarını kontrol edin.</p>
+            <details className="bg-gray-100 p-4 rounded">
+              <summary className="cursor-pointer font-medium">Hata Detayları</summary>
+              <pre className="mt-2 text-sm text-red-600 overflow-auto">
+                {this.state.error && this.state.error.toString()}
+                <br />
+                {this.state.errorInfo.componentStack}
+              </pre>
+            </details>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Sayfayı Yenile
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Simple Transaction Modal Component
 const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
@@ -321,9 +366,11 @@ function AppContent() {
 // Main App component with provider
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
 

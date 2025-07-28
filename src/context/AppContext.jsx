@@ -516,8 +516,36 @@ export function AppProvider({ children }) {
 
   // Action creators
   const actions = {
-    addTransaction: (transaction) => 
-      dispatch({ type: ActionTypes.ADD_TRANSACTION, payload: transaction }),
+    addTransaction: (transaction) => {
+      try {
+        console.log('🏪 AppContext addTransaction called with:', transaction);
+        console.log('🔍 Transaction type:', typeof transaction, 'Amount type:', typeof transaction?.amount);
+        
+        if (!transaction) {
+          console.error('❌ AppContext: Transaction is null/undefined!');
+          throw new Error('Transaction data is missing');
+        }
+        
+        if (!transaction.type) {
+          console.error('❌ AppContext: Transaction type is missing!');
+          throw new Error('Transaction type is required');
+        }
+        
+        if (typeof transaction.amount !== 'number' || isNaN(transaction.amount)) {
+          console.error('❌ AppContext: Invalid amount:', transaction.amount);
+          throw new Error('Transaction amount must be a valid number');
+        }
+        
+        console.log('✅ AppContext: Transaction validation passed, dispatching...');
+        dispatch({ type: ActionTypes.ADD_TRANSACTION, payload: transaction });
+        console.log('✅ AppContext: Transaction dispatched successfully');
+        
+      } catch (error) {
+        console.error('❌ AppContext addTransaction ERROR:', error);
+        alert('Transaction eklenirken AppContext hatası: ' + error.message);
+        throw error;
+      }
+    },
     
     updateTransaction: (transaction) => 
       dispatch({ type: ActionTypes.UPDATE_TRANSACTION, payload: transaction }),

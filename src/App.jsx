@@ -46,11 +46,10 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
         return;
       }
 
-      const transactionData = createTransaction({
+      const transactionData = createTransaction(formData.type, {
         description: formData.description,
         amount: amount,
         category: formData.category || (formData.type === 'income' ? 'Diğer Gelir' : 'Diğer Gider'),
-        type: formData.type,
         date: new Date().toISOString().split('T')[0],
         userId: 'default'
       });

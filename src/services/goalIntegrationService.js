@@ -41,8 +41,8 @@ class GoalIntegrationService {
       sortedGoals = [...goals].sort((a, b) => {
         // Emergency fund always first
         if (emergencyFundPriority) {
-          const aIsEmergency = a.category === 'emergency' || a.name.toLowerCase().includes('acil');
-          const bIsEmergency = b.category === 'emergency' || b.name.toLowerCase().includes('acil');
+          const aIsEmergency = a.category === 'emergency' || (a.name && a.name.toLowerCase().includes('acil'));
+          const bIsEmergency = b.category === 'emergency' || (b.name && b.name.toLowerCase().includes('acil'));
           
           if (aIsEmergency && !bIsEmergency) return -1;
           if (!aIsEmergency && bIsEmergency) return 1;

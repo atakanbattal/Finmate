@@ -28,15 +28,42 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
       return;
     }
 
-    // 🔧 TÜRKÇE LOCALE-AWARE NUMBER PARSING
+    // 🔧 PRODUCTION-SAFE TÜRKÇE LOCALE-AWARE NUMBER PARSING
     const normalizeAmount = (value) => {
-      if (!value) return 0;
-      return parseFloat(
-        value
-          .toString()
-          .replace(/\./g, '')  // Binlik ayırıcıları sil
-          .replace(',', '.')   // Ondalık virgülü noktaya çevir
-      ) || 0;
+      try {
+        if (!value || value === '' || value === null || value === undefined) {
+          return 0;
+        }
+        
+        // String'e çevir ve temizle
+        let cleanValue = String(value).trim();
+        
+        // Boş string kontrolü
+        if (cleanValue === '') {
+          return 0;
+        }
+        
+        // Türkçe format normalize et
+        cleanValue = cleanValue
+          .replace(/\./g, '')  // Binlik ayırıcıları sil (54.000 → 54000)
+          .replace(',', '.');  // Ondalık virgülü noktaya çevir (,50 → .50)
+        
+        // parseFloat ile dönüştür
+        const result = parseFloat(cleanValue);
+        
+        // NaN kontrolü
+        if (isNaN(result)) {
+          console.error('❌ Production SimpleModal: parseFloat failed for value:', value, 'cleaned:', cleanValue);
+          return 0;
+        }
+        
+        console.log('✅ Production SimpleModal: Amount parsed successfully:', value, '→', result);
+        return result;
+        
+      } catch (error) {
+        console.error('❌ Production SimpleModal: normalizeAmount error:', error, 'value:', value);
+        return 0;
+      }
     };
 
     const parsedAmount = normalizeAmount(formData.amount);
@@ -92,20 +119,39 @@ const SimpleTransactionModal = ({ onClose, modalData, actions }) => {
                   setFormData({ ...formData, amount: value });
                 }}
                 onBlur={(e) => {
-                  const value = e.target.value;
-                  if (value && value.trim() !== '') {
-                    const normalized = value
-                      .replace(/\./g, '')
-                      .replace(',', '.');
-                    
-                    const numValue = parseFloat(normalized);
-                    if (!isNaN(numValue) && numValue > 0) {
-                      const formatted = new Intl.NumberFormat('tr-TR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      }).format(numValue);
-                      setFormData({ ...formData, amount: formatted });
+                  // 🔧 PRODUCTION-SAFE SimpleTransactionModal onBlur handler
+                  try {
+                    const value = e.target.value;
+                    if (value && value.trim() !== '') {
+                      // String'e çevir ve temizle
+                      let cleanValue = String(value).trim();
+                      
+                      if (cleanValue === '') {
+                        return;
+                      }
+                      
+                      // Türkçe format normalize et
+                      const normalized = cleanValue
+                        .replace(/\./g, '')  // Binlik ayırıcıları sil
+                        .replace(',', '.');  // Virgülü noktaya çevir
+                      
+                      const numValue = parseFloat(normalized);
+                      
+                      if (!isNaN(numValue) && numValue > 0) {
+                        const formatted = new Intl.NumberFormat('tr-TR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        }).format(numValue);
+                        
+                        console.log('✅ Production SimpleModal onBlur: Formatted successfully:', value, '→', formatted);
+                        setFormData({ ...formData, amount: formatted });
+                      } else {
+                        console.error('❌ Production SimpleModal onBlur: Invalid number:', value, 'normalized:', normalized);
+                      }
                     }
+                  } catch (error) {
+                    console.error('❌ Production SimpleModal onBlur error:', error, 'value:', e.target.value);
+                    // Hata durumunda değeri olduğu gibi bırak
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"

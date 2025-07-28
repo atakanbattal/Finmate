@@ -9,6 +9,7 @@ import Reports from './components/Reports';
 import Settings from './components/Settings';
 import CashManagement from './components/CashManagement';
 import DynamicInvestmentForm from './components/DynamicInvestmentForm';
+import ErrorBoundary from './components/ErrorBoundary';
 import { createTransaction, createGoal, createReceivable } from './types';
 
 // Simple Transaction Modal Component
@@ -293,9 +294,13 @@ function AppContent() {
 // Main App component with provider
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
 

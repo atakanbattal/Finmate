@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -6,9 +6,37 @@ import {
   Plus
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import GoalInsights from './GoalInsights';
-import { getTransactionsWithRecurring, calculateCashManagementData } from '../utils/calculations';
+import { formatCurrency } from '../utils/formatters';
+import { calculateCashManagementData } from '../utils/calculations';
 import { investmentTypes } from './DynamicInvestmentForm';
+
+// PRODUCTION-SAFE ERROR LOGGING
+const logError = (error, context = '') => {
+  const errorLog = {
+    timestamp: new Date().toISOString(),
+    context: context,
+    error: {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    },
+    environment: process.env.NODE_ENV,
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+    url: typeof window !== 'undefined' ? window.location.href : 'unknown'
+  };
+  
+  console.error('🚨 DASHBOARD ERROR:', errorLog);
+  
+  // Store in localStorage for debugging
+  try {
+    const existingLogs = JSON.parse(localStorage.getItem('finmate_dashboard_errors') || '[]');
+    existingLogs.push(errorLog);
+    if (existingLogs.length > 5) existingLogs.shift(); // Keep only last 5
+    localStorage.setItem('finmate_dashboard_errors', JSON.stringify(existingLogs));
+  } catch (logError) {
+    console.error('Failed to log error to localStorage:', logError);
+  }
+};
 
 const Dashboard = () => {
   const { state, actions } = useApp();
@@ -108,13 +136,17 @@ const Dashboard = () => {
     });
   };
 
-  // BULLETPROOF PRODUCTION-SAFE TRANSACTION HANDLER
+  // BULLETPROOF PRODUCTION-SAFE TRANSACTION HANDLER WITH ERROR BOUNDARY
   const handleAddTransaction = React.useCallback(() => {
-    // IMMEDIATE RETURN GUARD - Production'da async işlemler için
-    if (typeof window === 'undefined') {
-      console.error('❌ Window object not available');
-      return;
-    }
+    try {
+      console.log('🚀 BULLETPROOF handleAddTransaction başladı');
+      
+      // IMMEDIATE RETURN GUARD - Production'da async işlemler için
+      if (typeof window === 'undefined') {
+        console.error('❌ Window object not available');
+        logError(new Error('Window object not available'), 'WINDOW_CHECK');
+        return;
+      }
     
     // PRODUCTION ENVIRONMENT DETECTION
     const isProduction = process.env.NODE_ENV === 'production';
@@ -293,6 +325,19 @@ const Dashboard = () => {
       
       // BULLETPROOF ERROR NOTIFICATION
       const errorMessage = `Beklenmeyen hata: ${criticalError.message || 'Bilinmeyen hata'}. Sayfayı yenileyip tekrar deneyin.`;
+      if (window.alert && typeof window.alert === 'function') {
+        window.alert(errorMessage);
+      } else {
+        console.error('❌ CRITICAL ERROR (no alert):', errorMessage);
+      }
+      
+      return false;
+    }
+    } catch (outerError) {
+      console.error('❌ CRITICAL ERROR in handleAddTransaction:', outerError);
+      logError(outerError, 'CRITICAL_TRANSACTION_ERROR');
+      
+      const errorMessage = `Beklenmeyen hata: ${outerError.message || 'Bilinmeyen hata'}. Sayfayı yenileyip tekrar deneyin.`;
       if (window.alert && typeof window.alert === 'function') {
         window.alert(errorMessage);
       } else {

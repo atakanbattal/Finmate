@@ -532,22 +532,40 @@ const Transactions = () => {
                     setFormData({ ...formData, amount: value });
                   }}
                   onBlur={(e) => {
-                    // Blur'da Türkçe formatlama uygula
-                    const value = e.target.value;
-                    if (value && value.trim() !== '') {
-                      const normalized = value
-                        .replace(/\./g, '')  // Mevcut binlik ayırıcıları sil
-                        .replace(',', '.');  // Virgülü noktaya çevir
-                      
-                      const numValue = parseFloat(normalized);
-                      if (!isNaN(numValue) && numValue > 0) {
-                        // Türkçe formatta göster: 54000.50 → 54.000,50
-                        const formatted = new Intl.NumberFormat('tr-TR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        }).format(numValue);
-                        setFormData({ ...formData, amount: formatted });
+                    // 🔧 PRODUCTION-SAFE Blur'da Türkçe formatlama uygula
+                    try {
+                      const value = e.target.value;
+                      if (value && value.trim() !== '') {
+                        // String'e çevir ve temizle
+                        let cleanValue = String(value).trim();
+                        
+                        if (cleanValue === '') {
+                          return;
+                        }
+                        
+                        // Türkçe format normalize et
+                        const normalized = cleanValue
+                          .replace(/\./g, '')  // Mevcut binlik ayırıcıları sil
+                          .replace(',', '.');  // Virgülü noktaya çevir
+                        
+                        const numValue = parseFloat(normalized);
+                        
+                        if (!isNaN(numValue) && numValue > 0) {
+                          // Türkçe formatta göster: 54000.50 → 54.000,50
+                          const formatted = new Intl.NumberFormat('tr-TR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          }).format(numValue);
+                          
+                          console.log('✅ Production onBlur: Formatted successfully:', value, '→', formatted);
+                          setFormData({ ...formData, amount: formatted });
+                        } else {
+                          console.error('❌ Production onBlur: Invalid number:', value, 'normalized:', normalized);
+                        }
                       }
+                    } catch (error) {
+                      console.error('❌ Production onBlur error:', error, 'value:', e.target.value);
+                      // Hata durumunda değeri olduğu gibi bırak
                     }
                   }}
                   className="input-field"

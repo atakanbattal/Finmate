@@ -108,148 +108,200 @@ const Dashboard = () => {
     });
   };
 
-  const handleAddTransaction = () => {
+  // BULLETPROOF PRODUCTION-SAFE TRANSACTION HANDLER
+  const handleAddTransaction = React.useCallback(() => {
+    // IMMEDIATE RETURN GUARD - Production'da async işlemler için
+    if (typeof window === 'undefined') {
+      console.error('❌ Window object not available');
+      return;
+    }
+    
+    // PRODUCTION ENVIRONMENT DETECTION
+    const isProduction = process.env.NODE_ENV === 'production';
+    const debugLog = isProduction ? () => {} : console.log;
+    
+    debugLog('🚀 BULLETPROOF handleAddTransaction başladı');
+    debugLog('📝 Environment:', process.env.NODE_ENV);
+    debugLog('📝 formData:', formData);
+    debugLog('📝 transactionType:', transactionType);
+    
+    // BULLETPROOF VALIDATION - Production'da kesinlikle çalışacak
     try {
-      console.log('🚀 handleAddTransaction başladı');
-      console.log('📝 formData:', formData);
-      console.log('📝 transactionType:', transactionType);
-      
-      // PRODUCTION SAFE VALIDATION
-      if (!formData || typeof formData !== 'object') {
-        console.error('❌ formData is invalid:', formData);
-        alert('Form verileri geçersiz. Sayfayı yenileyip tekrar deneyin.');
-        return;
+      // Form data validation
+      if (!formData || Object.prototype.toString.call(formData) !== '[object Object]') {
+        const msg = 'Form verileri geçersiz. Sayfayı yenileyip tekrar deneyin.';
+        console.error('❌ formData validation failed:', formData);
+        window.alert && window.alert(msg);
+        return false;
       }
       
-      if (!formData.description || typeof formData.description !== 'string' || !formData.description.trim()) {
-        console.log('❌ Description validation failed');
-        alert('Lütfen geçerli bir açıklama girin.');
-        return;
+      // Description validation
+      const description = formData.description;
+      if (!description || typeof description !== 'string' || description.trim().length === 0) {
+        const msg = 'Lütfen geçerli bir açıklama girin.';
+        console.error('❌ Description validation failed:', description);
+        window.alert && window.alert(msg);
+        return false;
       }
       
-      if (!formData.amount || isNaN(parseFloat(formData.amount)) || parseFloat(formData.amount) <= 0) {
-        console.log('❌ Amount validation failed');
-        alert('Lütfen geçerli bir miktar girin.');
-        return;
+      // Amount validation
+      const amount = formData.amount;
+      const numAmount = Number(amount);
+      if (!amount || isNaN(numAmount) || numAmount <= 0) {
+        const msg = 'Lütfen geçerli bir miktar girin.';
+        console.error('❌ Amount validation failed:', amount, numAmount);
+        window.alert && window.alert(msg);
+        return false;
       }
       
-      if (!transactionType || (transactionType !== 'income' && transactionType !== 'expense')) {
-        console.error('❌ transactionType is invalid:', transactionType);
-        alert('Lütfen işlem türünü seçin.');
-        return;
+      // Transaction type validation
+      if (!transactionType || !['income', 'expense'].includes(transactionType)) {
+        const msg = 'Lütfen işlem türünü seçin.';
+        console.error('❌ TransactionType validation failed:', transactionType);
+        window.alert && window.alert(msg);
+        return false;
       }
-
-      // PRODUCTION SAFE ACTION VALIDATION
-      if (!actions || typeof actions !== 'object') {
-        console.error('❌ actions object is invalid:', actions);
-        alert('Uygulama durumu geçersiz. Sayfayı yenileyip tekrar deneyin.');
-        return;
+      
+      // Actions validation
+      if (!actions || Object.prototype.toString.call(actions) !== '[object Object]') {
+        const msg = 'Uygulama durumu geçersiz. Sayfayı yenileyip tekrar deneyin.';
+        console.error('❌ Actions object validation failed:', actions);
+        window.alert && window.alert(msg);
+        return false;
       }
       
       if (!actions.addTransaction || typeof actions.addTransaction !== 'function') {
-        console.error('❌ actions.addTransaction is not a function:', actions.addTransaction);
-        alert('Uygulama fonksiyonu bulunamadı. Sayfayı yenileyip tekrar deneyin.');
-        return;
+        const msg = 'Uygulama fonksiyonu bulunamadı. Sayfayı yenileyip tekrar deneyin.';
+        console.error('❌ addTransaction function validation failed:', actions.addTransaction);
+        window.alert && window.alert(msg);
+        return false;
       }
-
-      const totalAmount = parseFloat(formData.amount);
-      const installmentCount = parseInt(formData.installments) || 1;
+      
+      debugLog('✅ All validations passed');
+      
+      // BULLETPROOF TRANSACTION CREATION
+      const totalAmount = Number(formData.amount);
+      const installmentCount = Math.max(1, parseInt(formData.installments) || 1);
       const installmentAmount = totalAmount / installmentCount;
       
-      // Taksit sayısına göre işlemler oluştur
+      debugLog('📊 Transaction details:', { totalAmount, installmentCount, installmentAmount });
+      
+      // Process each installment
       for (let i = 0; i < installmentCount; i++) {
-        const installmentDate = new Date(formData.date);
-        
-        // Taksit tipine göre tarih hesapla
-        switch (formData.installmentType) {
-          case 'monthly':
-            installmentDate.setMonth(installmentDate.getMonth() + i);
-            break;
-          case 'weekly':
-            installmentDate.setDate(installmentDate.getDate() + (i * 7));
-            break;
-          case 'daily':
-            installmentDate.setDate(installmentDate.getDate() + i);
-            break;
-        }
-        
-        const newTransaction = {
-          id: `${Date.now()}_${i}`,
-          type: transactionType,
-          amount: installmentAmount,
-          description: installmentCount > 1 
-            ? `${formData.description.trim()} (${i + 1}/${installmentCount})`
-            : formData.description.trim(),
-          category: 'Genel',
-          date: installmentDate.toISOString().split('T')[0],
-          userId: state.currentUser || 'default',
-          createdAt: new Date().toISOString(),
-          isInstallment: installmentCount > 1,
-          installmentInfo: installmentCount > 1 ? {
-            current: i + 1,
-            total: installmentCount,
-            originalAmount: totalAmount
-          } : null
-        };
-        
-        console.log('💾 Adding transaction:', newTransaction);
-        
         try {
-          const result = actions.addTransaction(newTransaction);
-          console.log('✅ Transaction added successfully, result:', result);
-        } catch (error) {
-          console.error('❌ Error adding transaction:', error);
-          console.error('❌ Error stack:', error.stack);
-          alert('İşlem eklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
-          return;
+          const installmentDate = new Date(formData.date || new Date());
+          
+          // Calculate installment date
+          switch (formData.installmentType) {
+            case 'monthly':
+              installmentDate.setMonth(installmentDate.getMonth() + i);
+              break;
+            case 'weekly':
+              installmentDate.setDate(installmentDate.getDate() + (i * 7));
+              break;
+            case 'daily':
+              installmentDate.setDate(installmentDate.getDate() + i);
+              break;
+            default:
+              // No date change for single payment
+              break;
+          }
+          
+          // Create transaction object
+          const transactionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`;
+          const newTransaction = {
+            id: transactionId,
+            type: String(transactionType),
+            amount: Number(installmentAmount),
+            description: installmentCount > 1 
+              ? `${String(description).trim()} (${i + 1}/${installmentCount})`
+              : String(description).trim(),
+            category: 'Genel',
+            date: installmentDate.toISOString().split('T')[0],
+            userId: (state && state.currentUser) ? String(state.currentUser) : 'default',
+            createdAt: new Date().toISOString(),
+            isInstallment: installmentCount > 1,
+            installmentInfo: installmentCount > 1 ? {
+              current: i + 1,
+              total: installmentCount,
+              originalAmount: totalAmount
+            } : null
+          };
+          
+          debugLog(`💾 Adding transaction ${i + 1}/${installmentCount}:`, newTransaction);
+          
+          // BULLETPROOF ACTION CALL
+          const actionResult = actions.addTransaction(newTransaction);
+          debugLog(`✅ Transaction ${i + 1} added successfully:`, actionResult);
+          
+        } catch (transactionError) {
+          console.error(`❌ Error adding transaction ${i + 1}:`, transactionError);
+          const msg = `İşlem ${i + 1} eklenirken hata oluştu: ${transactionError.message || 'Bilinmeyen hata'}`;
+          window.alert && window.alert(msg);
+          return false;
         }
       }
       
-      // PRODUCTION SAFE FORM RESET
+      // BULLETPROOF FORM RESET
       try {
-        setFormData({ 
-          description: '', 
-          amount: '', 
+        const resetData = {
+          description: '',
+          amount: '',
           date: new Date().toISOString().split('T')[0],
           installments: 1,
           installmentType: 'monthly'
-        });
+        };
+        
+        setFormData(resetData);
         setShowAddForm(false);
         
-        // Başarı mesajı
-        const message = installmentCount > 1 
+        const successMessage = installmentCount > 1 
           ? `${installmentCount} taksitli işlem başarıyla eklendi!`
           : 'İşlem başarıyla eklendi!';
         
-        // Production'da alert yerine daha güvenli bildirim
-        if (typeof alert === 'function') {
-          alert(message);
+        debugLog('✅ Form reset completed');
+        debugLog('✅ SUCCESS:', successMessage);
+        
+        // BULLETPROOF SUCCESS NOTIFICATION
+        if (window.alert && typeof window.alert === 'function') {
+          window.alert(successMessage);
         } else {
-          console.log('✅ SUCCESS:', message);
+          console.log('✅ SUCCESS (no alert):', successMessage);
         }
         
-        console.log('✅ Form reset completed');
+        return true;
+        
       } catch (resetError) {
         console.error('❌ Error during form reset:', resetError);
-        // Form reset hatası olsa bile işlem eklendi, sadece log'la
+        // Form reset hatası olsa bile işlem eklendi
+        const msg = 'Form sıfırlanurken hata oluştu ama işlem eklendi.';
+        window.alert && window.alert(msg);
+        return true;
       }
       
-    } catch (outerError) {
-      console.error('❌ CRITICAL ERROR in handleAddTransaction:', outerError);
-      console.error('❌ Error stack:', outerError.stack);
-      console.error('❌ Current state - formData:', formData);
-      console.error('❌ Current state - transactionType:', transactionType);
-      console.error('❌ Current state - actions:', actions);
+    } catch (criticalError) {
+      console.error('❌ CRITICAL ERROR in handleAddTransaction:', criticalError);
+      console.error('❌ Error name:', criticalError.name);
+      console.error('❌ Error message:', criticalError.message);
+      console.error('❌ Error stack:', criticalError.stack);
+      console.error('❌ Current state:', {
+        formData: formData,
+        transactionType: transactionType,
+        actions: actions,
+        state: state
+      });
       
-      // Production'da kullanıcıya anlamlı hata mesajı
-      const errorMessage = 'Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.';
-      if (typeof alert === 'function') {
-        alert(errorMessage);
+      // BULLETPROOF ERROR NOTIFICATION
+      const errorMessage = `Beklenmeyen hata: ${criticalError.message || 'Bilinmeyen hata'}. Sayfayı yenileyip tekrar deneyin.`;
+      if (window.alert && typeof window.alert === 'function') {
+        window.alert(errorMessage);
       } else {
-        console.error('❌ ALERT FALLBACK:', errorMessage);
+        console.error('❌ CRITICAL ERROR (no alert):', errorMessage);
       }
+      
+      return false;
     }
-  };
+  }, [formData, transactionType, actions, state, setFormData, setShowAddForm]); // React.useCallback dependencies
 
   return (
     <div className="space-y-4">

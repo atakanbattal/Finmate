@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/formatters';
-import { calculateCashManagementData } from '../utils/calculations';
+import { calculateCashManagementData, getTransactionsWithRecurring } from '../utils/calculations';
 import { investmentTypes } from './DynamicInvestmentForm';
+import GoalInsights from './GoalInsights';
 
 // PRODUCTION-SAFE ERROR LOGGING
 const logError = (error, context = '') => {

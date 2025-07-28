@@ -139,51 +139,7 @@ const Dashboard = () => {
         return;
       }
 
-    const totalAmount = parseFloat(formData.amount);
-    const installmentCount = parseInt(formData.installments) || 1;
-    const installmentAmount = totalAmount / installmentCount;
-    
-    // Taksit sayısına göre işlemler oluştur
-    for (let i = 0; i < installmentCount; i++) {
-      const installmentDate = new Date(formData.date);
-      
-      // Taksit tipine göre tarih hesapla
-      switch (formData.installmentType) {
-        case 'monthly':
-          installmentDate.setMonth(installmentDate.getMonth() + i);
-          break;
-        case 'weekly':
-          installmentDate.setDate(installmentDate.getDate() + (i * 7));
-          break;
-        case 'daily':
-          installmentDate.setDate(installmentDate.getDate() + i);
-          break;
-      }
-      
-      const newTransaction = {
-        id: `${Date.now()}_${i}`,
-        type: transactionType,
-        amount: installmentAmount,
-        description: installmentCount > 1 
-          ? `${formData.description.trim()} (${i + 1}/${installmentCount})`
-          : formData.description.trim(),
-        category: 'Genel',
-        date: installmentDate.toISOString().split('T')[0],
-        userId: state.currentUser || 'default',
-        createdAt: new Date().toISOString(),
-        isInstallment: installmentCount > 1,
-        installmentInfo: installmentCount > 1 ? {
-          current: i + 1,
-          total: installmentCount,
-          originalAmount: totalAmount
-        } : null
-      };
-      
-      console.log('💾 Adding transaction:', newTransaction);
-      console.log('🔧 actions object:', actions);
-      console.log('🔧 actions.addTransaction type:', typeof actions.addTransaction);
-      
-      // PRODUCTION SAFE ACTION CALL
+      // PRODUCTION SAFE ACTION VALIDATION
       if (!actions || typeof actions !== 'object') {
         console.error('❌ actions object is invalid:', actions);
         alert('Uygulama durumu geçersiz. Sayfayı yenileyip tekrar deneyin.');
@@ -195,18 +151,60 @@ const Dashboard = () => {
         alert('Uygulama fonksiyonu bulunamadı. Sayfayı yenileyip tekrar deneyin.');
         return;
       }
+
+      const totalAmount = parseFloat(formData.amount);
+      const installmentCount = parseInt(formData.installments) || 1;
+      const installmentAmount = totalAmount / installmentCount;
       
-      try {
-        const result = actions.addTransaction(newTransaction);
-        console.log('✅ Transaction added successfully, result:', result);
-      } catch (error) {
-        console.error('❌ Error adding transaction:', error);
-        console.error('❌ Error stack:', error.stack);
-        alert('İşlem eklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
-        return;
+      // Taksit sayısına göre işlemler oluştur
+      for (let i = 0; i < installmentCount; i++) {
+        const installmentDate = new Date(formData.date);
+        
+        // Taksit tipine göre tarih hesapla
+        switch (formData.installmentType) {
+          case 'monthly':
+            installmentDate.setMonth(installmentDate.getMonth() + i);
+            break;
+          case 'weekly':
+            installmentDate.setDate(installmentDate.getDate() + (i * 7));
+            break;
+          case 'daily':
+            installmentDate.setDate(installmentDate.getDate() + i);
+            break;
+        }
+        
+        const newTransaction = {
+          id: `${Date.now()}_${i}`,
+          type: transactionType,
+          amount: installmentAmount,
+          description: installmentCount > 1 
+            ? `${formData.description.trim()} (${i + 1}/${installmentCount})`
+            : formData.description.trim(),
+          category: 'Genel',
+          date: installmentDate.toISOString().split('T')[0],
+          userId: state.currentUser || 'default',
+          createdAt: new Date().toISOString(),
+          isInstallment: installmentCount > 1,
+          installmentInfo: installmentCount > 1 ? {
+            current: i + 1,
+            total: installmentCount,
+            originalAmount: totalAmount
+          } : null
+        };
+        
+        console.log('💾 Adding transaction:', newTransaction);
+        
+        try {
+          const result = actions.addTransaction(newTransaction);
+          console.log('✅ Transaction added successfully, result:', result);
+        } catch (error) {
+          console.error('❌ Error adding transaction:', error);
+          console.error('❌ Error stack:', error.stack);
+          alert('İşlem eklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
+          return;
+        }
       }
-    }
-    
+      
       // PRODUCTION SAFE FORM RESET
       try {
         setFormData({ 

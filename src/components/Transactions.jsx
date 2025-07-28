@@ -411,16 +411,43 @@ const Transactions = () => {
         return;
       }
 
-      // 🔧 TÜRKÇE LOCALE-AWARE NUMBER PARSING
+      // 🔧 PRODUCTION-SAFE TÜRKÇE LOCALE-AWARE NUMBER PARSING
       // Türkçe format: 54.000,50 → 54000.50 (parseFloat için)
       const normalizeAmount = (value) => {
-        if (!value) return 0;
-        return parseFloat(
-          value
-            .toString()
+        try {
+          if (!value || value === '' || value === null || value === undefined) {
+            return 0;
+          }
+          
+          // String'e çevir ve temizle
+          let cleanValue = String(value).trim();
+          
+          // Boş string kontrolü
+          if (cleanValue === '') {
+            return 0;
+          }
+          
+          // Türkçe format normalize et
+          cleanValue = cleanValue
             .replace(/\./g, '')  // Binlik ayırıcıları sil (54.000 → 54000)
-            .replace(',', '.')   // Ondalık virgülü noktaya çevir (,50 → .50)
-        ) || 0;
+            .replace(',', '.');  // Ondalık virgülü noktaya çevir (,50 → .50)
+          
+          // parseFloat ile dönüştür
+          const result = parseFloat(cleanValue);
+          
+          // NaN kontrolü
+          if (isNaN(result)) {
+            console.error('❌ Production: parseFloat failed for value:', value, 'cleaned:', cleanValue);
+            return 0;
+          }
+          
+          console.log('✅ Production: Amount parsed successfully:', value, '→', result);
+          return result;
+          
+        } catch (error) {
+          console.error('❌ Production: normalizeAmount error:', error, 'value:', value);
+          return 0;
+        }
       };
 
       const parsedAmount = normalizeAmount(formData.amount);

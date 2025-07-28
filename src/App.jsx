@@ -7,6 +7,7 @@ import CashManagement from './components/CashManagement';
 import Investments from './components/Investments';
 import Goals from './components/Goals';
 import DynamicInvestmentForm from './components/DynamicInvestmentForm';
+import Layout from './components/Layout';
 import './App.css';
 
 // Global Error Boundary
